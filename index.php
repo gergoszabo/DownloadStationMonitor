@@ -1,4 +1,8 @@
 <?php
+define('SL_CSAT', 1);
+define('SL_OSSZ', 2);
+define('SL_MIX', 4);
+
 include 'egyeni_beallitasok.php';
 ?>
 <html> 
@@ -42,7 +46,7 @@ include 'egyeni_beallitasok.php';
 	$tasksUrl='http://'.IP.':'.PORT.'/webapi/DownloadStation/task.cgi?api='.
 		'SYNO.DownloadStation.Task&version=1&method=list&_sid='.SID.
 		'&additional=transfer,detail,tracker'; 
-		
+
 	$decodedrequest=json_decode(file_get_contents($tasksUrl), true);
 	$totaldownloads=$decodedrequest['data']['total']; //get total number of downloads (for statistics)
 
@@ -50,7 +54,7 @@ include 'egyeni_beallitasok.php';
 		if($a['status'] == $b['status']) {
 			return strcmp($a['title'], $b['title']);
 		}
-		
+
 		return strcmp($a['status'], $b['status']);
 	});
 	
@@ -59,44 +63,58 @@ include 'egyeni_beallitasok.php';
 		$title = $task['title'];
 		$size = (float)$task['size'];
 		$status = $task['status'];
-		
+
 		$size_downloaded = (float)$task['additional']['transfer']['size_downloaded'];
 		$size_uploaded = (float)$task['additional']['transfer']['size_uploaded'];
 		$speed_download = (float)$task['additional']['transfer']['speed_download'];
 		$speed_upload = (float)$task['additional']['transfer']['speed_upload'];
 		$ratio = round($size_uploaded / ($size_downloaded > 0 ? $size_downloaded : 1), 2);
-		
+
 		$size = round($size / GB,2);
 		$size_downloaded = round($size_downloaded / GB, 2);
 		$size_uploaded = round($size_uploaded / GB, 2);
 		$speed_download = round($speed_download / MB, 2);
 		$speed_upload = round($speed_upload / MB, 2);
-		 
+
 		$progress = round($size_downloaded /($size > 0 ? $size : 1) * 100, 1);
-		 
+
 		$trackerstatuses = array();
+		$totalSeeds = 0;
+		$connectedSeeds = (float)$task['additional']['detail']['connected_seeders'];
+		$totalPeers = 0;
+		$connectedPeers = (float)$task['additional']['detail']['connected_leechers'];
+
 		if(isset($task['additional']['tracker'])) {
 			$tracker = $task['additional']['tracker'];
-		   
+
 			if(is_array($tracker)) {
 				foreach($tracker as $t) {
-					if(isset($t['status']) && strlen($t['status']))
+					if(isset($t['status']) && strlen($t['status'])) {
 						$trackerstatuses[] = $t['status'];
+
+						$s = (float)$t['seeds'];
+						if($s > 0)
+							$seeds += $s;
+
+						$p = (float)$t['peers'];
+						if($p > 0)
+							$peers += $p;
+					}
 				}
 			}
 			else {
 				try {
 					$trackerstatuses[] = $tracker[0]['status'];
+
+					$seeds = (float)$tracker[0]['seeds'];
+					$peers = (float)$tracker[0]['peers'];
 				}
 				catch (Exception $ex) {
 				}
 			}
 		}
+		
 		$trackerstatus = implode(',', $trackerstatuses);
-		
-		$connectedSeeders = (float)$task['additional']['detail']['connected_seeders'];
-		$connectedLeechers = (float)$task['additional']['detail']['connected_leechers'];
-		
 ?>
 			<tr>
 				<td><?=$title?></td>
@@ -111,7 +129,21 @@ include 'egyeni_beallitasok.php';
 				<td class="right size"><?=$speed_download?> MB/s</td>
 				<td class="right size"><?=$speed_upload?> MB/s</td>
 				<td class="center"><?=$trackerstatus?></td>
-				<td class="center"><?=$connectedSeeders?>/<?=$connectedLeechers?></td>
+				<td class="center">
+				<?
+					switch(SL) {
+						case SL_CSAT:
+							echo "$seeds / $peers";
+						break;
+						case SL_OSSZ:
+							echo "$connectedSeeds / $connectedPeers";
+						break;
+						case SL_MIX:
+							echo "$seeds / $peers ($connectedSeeds / $connectedPeers)";
+						break;
+					}
+				?>
+				</td>
 				<td class="center">
 					<img src="images_status/<?=$status?>.png" width=15 height=15 align="center">
 				</td>
