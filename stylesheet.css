@@ -1,0 +1,63 @@
+body {
+	background-color: #C5E5FF;
+	font-family: Helvetica, Verdana, Arial,serif;
+}
+
+h2 {
+	font-size: 20pt;
+}
+
+table {
+	margin-left: auto;
+	margin-right: auto;
+	border: 1px;
+	border-spacing: 0px;
+}
+
+table tr:nth-child(odd) {
+   background-color: #44ACFF;
+   color: black;
+}
+
+table tr:nth-child(even) {
+   background-color: #A1D5FF;
+   color: black;
+}
+
+th {
+	/* font-family:Helvetica, Verdana, Arial,serif; */
+	padding-right: 6px;
+	padding-left: 6px;
+	font-size: 12pt;
+}
+
+td {
+	font-size: 10pt;
+	min-width: 50px;
+}
+
+.size {
+	min-width: 65px;
+}
+
+footer {
+	font-size: 10pt;
+	margin-left: auto;
+	display: table;
+}
+
+progress {
+	max-width: 100px;
+}
+
+.center {
+	text-align: center;
+}
+
+.right {	
+	text-align: right;
+}
+
+.autowidth {
+	width: auto;
+}
