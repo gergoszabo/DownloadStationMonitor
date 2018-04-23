@@ -1,14 +1,19 @@
 <?php
+$elotte = microtime(true);
+@session_start();
 define('SL_CSAT', 1);
 define('SL_OSSZ', 2);
 define('SL_MIX', 4);
+define('VERSION', '0.6');
 
 include 'egyeni_beallitasok.php';
+include 'session_2fa.php';
+
 ?>
 <html> 
 <head>	 
 	<title>Download Station Monitor</title>
-	<meta http-equiv=Content-Type content="text/html; charset=UTF-8">
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
 	<link type="text/css" rel="stylesheet" href="stylesheet.css"/>
 	<meta http-equiv="refresh" content="<?=UJRATOLTES?>">
 </head>
@@ -35,21 +40,16 @@ include 'egyeni_beallitasok.php';
 <?
 	define('MB', 1024 * 1024);
 	define('GB', MB * 1024);
-
 	 
-	$loginUrl='http://'.IP.':'.PORT.'/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login'.
-		'&account='.USER.'&passwd='.PASS.'&session=DownloadStation&format=cookie';
-	$decodedlogin=json_decode(file_get_contents($loginUrl), true);
-	 
-	define('SID', $decodedlogin['data']['sid']);
-
 	$tasksUrl='http://'.IP.':'.PORT.'/webapi/DownloadStation/task.cgi?api='.
-		'SYNO.DownloadStation.Task&version=1&method=list&_sid='.SID.
-		'&additional=transfer,detail,tracker'; 
+		'SYNO.DownloadStation.Task&version=1&method=list&_sid='.$_SESSION['sid'].
+		'&additional=transfer,detail,tracker';
 
 	$decodedrequest=json_decode(file_get_contents($tasksUrl), true);
+
 	$totaldownloads=$decodedrequest['data']['total']; //get total number of downloads (for statistics)
 
+	if(isset($decodedrequest['data']['tasks']))
 	usort($decodedrequest['data']['tasks'], function($a, $b) {
 		if($a['status'] == $b['status']) {
 			return strcmp($a['title'], $b['title']);
@@ -152,7 +152,7 @@ include 'egyeni_beallitasok.php';
 	}
 	
 	$speedsUrl = 'http://'.IP.':'.PORT.'/webapi/DownloadStation/statistic.cgi?api='.
-		'SYNO.DownloadStation.Statistic&version=1&method=getinfo&_sid='.SID;
+		'SYNO.DownloadStation.Statistic&version=1&method=getinfo&_sid='.$_SESSION['sid'];
 	$decodedspeeds = json_decode(file_get_contents($speedsUrl),true);
 	$totaldownspeed = $decodedspeeds['data']['speed_download'] / MB;
 	$totalupspeed = $decodedspeeds['data']['speed_upload'] / MB;
@@ -172,6 +172,7 @@ include 'egyeni_beallitasok.php';
 		</tr>
 	</table> 
 <footer>
-Verzió: 0.5
+Verzió: <?=VERSION?>
+<br><small>Generálva: <?=round(microtime(true) - $elotte, 2)?> másodperc</small>
 </footer> 
 </html>
