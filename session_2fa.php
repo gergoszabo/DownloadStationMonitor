@@ -29,10 +29,10 @@ if(TWOFA) {
 
 	if(!isset($_SESSION['sid']))
 	{
-		$loginUrl = 'http://'.IP.':'.PORT.'/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login'.
+		$loginUrl = PROTOCOL.'://'.IP.':'.PORT.'/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login'.
 		'&account='.USER.'&passwd='.PASS.'&session=DownloadStation&format=sid&otp_code='.$_SESSION['otp'];
 
-		$decodedlogin = json_decode(file_get_contents($loginUrl), true);
+		$decodedlogin = json_decode(get($loginUrl), true);
 
 		if(isset($decodedlogin['data']['sid']))
 			$_SESSION['sid'] = $decodedlogin['data']['sid'];
@@ -40,10 +40,10 @@ if(TWOFA) {
 }
 
 if(!isset($_SESSION['sid'])) {
-	$loginUrl = 'http://'.IP.':'.PORT.'/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login'.
+	$loginUrl = PROTOCOL.'://'.IP.':'.PORT.'/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login'.
 		'&account='.USER.'&passwd='.PASS.'&session=DownloadStation&format=sid';
 
-	$decodedlogin = json_decode(file_get_contents($loginUrl), true);
+	$decodedlogin = json_decode(get($loginUrl), true);
 
 	if(isset($decodedlogin['data']['sid']))
 		$_SESSION['sid'] = $decodedlogin['data']['sid'];

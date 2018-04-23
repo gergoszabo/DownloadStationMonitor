@@ -17,3 +17,6 @@ define('SL', SL_MIX);
 
 // kétlépcső azonosítás: igen-> true, nem -> false
 define('TWOFA', false);
+
+// https vagy http használata
+define('PROTOCOL', 'http');

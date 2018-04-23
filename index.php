@@ -4,7 +4,27 @@ $elotte = microtime(true);
 define('SL_CSAT', 1);
 define('SL_OSSZ', 2);
 define('SL_MIX', 4);
-define('VERSION', '0.6');
+define('VERSION', '0.6.1');
+
+function get($url) {
+	$ch = curl_init();
+
+	$defaults = array(
+		CURLOPT_URL => $url,
+		CURLOPT_HEADER => 0,
+		CURLOPT_RETURNTRANSFER => TRUE,
+		CURLOPT_TIMEOUT => 4,
+		CURLOPT_SSL_VERIFYHOST => 0,
+		CURLOPT_SSL_VERIFYPEER => 0,
+	);
+	curl_setopt_array($ch, $defaults);
+
+	$result = curl_exec($ch);
+
+	curl_close($ch);
+
+	return $result;
+}
 
 include 'egyeni_beallitasok.php';
 include 'session_2fa.php';
@@ -41,13 +61,13 @@ include 'session_2fa.php';
 	define('MB', 1024 * 1024);
 	define('GB', MB * 1024);
 	 
-	$tasksUrl='http://'.IP.':'.PORT.'/webapi/DownloadStation/task.cgi?api='.
+	$tasksUrl = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/task.cgi?api='.
 		'SYNO.DownloadStation.Task&version=1&method=list&_sid='.$_SESSION['sid'].
 		'&additional=transfer,detail,tracker';
 
-	$decodedrequest=json_decode(file_get_contents($tasksUrl), true);
+	$decodedrequest = json_decode(get($tasksUrl), true);
 
-	$totaldownloads=$decodedrequest['data']['total']; //get total number of downloads (for statistics)
+	$totaldownloads = $decodedrequest['data']['total']; //get total number of downloads (for statistics)
 
 	if(isset($decodedrequest['data']['tasks']))
 	usort($decodedrequest['data']['tasks'], function($a, $b) {
@@ -151,9 +171,9 @@ include 'session_2fa.php';
 <?
 	}
 	
-	$speedsUrl = 'http://'.IP.':'.PORT.'/webapi/DownloadStation/statistic.cgi?api='.
+	$speedsUrl = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/statistic.cgi?api='.
 		'SYNO.DownloadStation.Statistic&version=1&method=getinfo&_sid='.$_SESSION['sid'];
-	$decodedspeeds = json_decode(file_get_contents($speedsUrl),true);
+	$decodedspeeds = json_decode(get($speedsUrl),true);
 	$totaldownspeed = $decodedspeeds['data']['speed_download'] / MB;
 	$totalupspeed = $decodedspeeds['data']['speed_upload'] / MB;
   
