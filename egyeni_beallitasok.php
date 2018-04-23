@@ -20,3 +20,9 @@ define('TWOFA', false);
 
 // https vagy http használata
 define('PROTOCOL', 'http');
+
+// hibakereséshez true, egyébként false
+define('DEBUG', false);
+
+if(DEBUG)
+	$_SESSION['debug'] = array();

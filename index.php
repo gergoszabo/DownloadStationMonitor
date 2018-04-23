@@ -4,7 +4,7 @@ $elotte = microtime(true);
 define('SL_CSAT', 1);
 define('SL_OSSZ', 2);
 define('SL_MIX', 4);
-define('VERSION', '0.6.1');
+define('VERSION', '0.6.2');
 
 function get($url) {
 	$ch = curl_init();
@@ -24,6 +24,11 @@ function get($url) {
 	curl_close($ch);
 
 	return $result;
+}
+
+function substruntil($source, $until) {
+	$pos = strpos($source, $until);
+	return substr($source, 0, $pos);
 }
 
 include 'egyeni_beallitasok.php';
@@ -65,18 +70,29 @@ include 'session_2fa.php';
 		'SYNO.DownloadStation.Task&version=1&method=list&_sid='.$_SESSION['sid'].
 		'&additional=transfer,detail,tracker';
 
+	if(DEBUG) {
+		$_SESSION['debug'][] = 'tasksUrl: '.substruntil($tasksUrl, '/webapi/');
+	}
+
 	$decodedrequest = json_decode(get($tasksUrl), true);
 
 	$totaldownloads = $decodedrequest['data']['total']; //get total number of downloads (for statistics)
 
-	if(isset($decodedrequest['data']['tasks']))
-	usort($decodedrequest['data']['tasks'], function($a, $b) {
-		if($a['status'] == $b['status']) {
-			return strcmp($a['title'], $b['title']);
-		}
+	if(DEBUG) {
+		$_SESSION['debug'][] = 'taskCount: '. (isset($decodedrequest['data']['tasks']) ? count($decodedrequest['data']['tasks']) : NaN);
+	}
 
-		return strcmp($a['status'], $b['status']);
-	});
+	if(isset($decodedrequest['data']['tasks']))
+		usort($decodedrequest['data']['tasks'], function($a, $b) {
+			if($a['status'] == $b['status']) {
+				return strcmp($a['title'], $b['title']);
+			}
+
+			return strcmp($a['status'], $b['status']);
+		});
+	else
+		// ha nincs semmi, akkor üres
+		$decodedrequest['data']['tasks'] = array();
 	
 	foreach($decodedrequest['data']['tasks'] as $task) {
 		
@@ -133,8 +149,11 @@ include 'session_2fa.php';
 				}
 			}
 		}
+		else {
+			$trackerstatuses[] = '-';
+		}
 		
-		$trackerstatus = implode(',', $trackerstatuses);
+		$trackerstatus = implode(',', array_unique($trackerstatuses));
 ?>
 			<tr>
 				<td><?=$title?></td>
@@ -173,9 +192,19 @@ include 'session_2fa.php';
 	
 	$speedsUrl = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/statistic.cgi?api='.
 		'SYNO.DownloadStation.Statistic&version=1&method=getinfo&_sid='.$_SESSION['sid'];
+
+	if(DEBUG) {
+		$_SESSION['debug'][] = 'speedsUrl: '.substruntil($speedsUrl, '/webapi/');
+	}
+
 	$decodedspeeds = json_decode(get($speedsUrl),true);
-	$totaldownspeed = $decodedspeeds['data']['speed_download'] / MB;
-	$totalupspeed = $decodedspeeds['data']['speed_upload'] / MB;
+	if(isset($decodedspeeds['data'])) {
+		$totaldownspeed = $decodedspeeds['data']['speed_download'] / MB;
+		$totalupspeed = $decodedspeeds['data']['speed_upload'] / MB;
+	}
+	else {
+		$totaldownspeed = $totalupspeed = NaN;
+	}
   
 ?>
 	</table>
@@ -194,5 +223,20 @@ include 'session_2fa.php';
 <footer>
 Verzió: <?=VERSION?>
 <br><small>Generálva: <?=round(microtime(true) - $elotte, 2)?> másodperc</small>
-</footer> 
+</footer>
+<?
+if(DEBUG) {
+?>
+<pre>
+<?
+	foreach($_SESSION['debug'] as $d) {
+		echo $d.PHP_EOL;
+	}
+?>
+</pre>
+<?
+	unset($_SESSION['debug']);
+}
+?>
+</body>
 </html>
