@@ -1,7 +1,7 @@
 # DownloadStationMonitor
 
 #### Synology beállítások
-Borisz76 [bejegyzését](https://logout.hu/bejegyzes/borisz76/synology_dsm_6_unregistered_torrent_ds_ncore.html) annyiban egészíteném ki, hogy a PHP beállításkná a Kiterjesztéseknél a **_curl_**-hoz is tegyük be a pipát!
+Borisz76 [bejegyzését](https://logout.hu/bejegyzes/borisz76/synology_dsm_6_unregistered_torrent_ds_ncore.html) annyiban egészíteném ki, hogy a PHP beállításoknál a Kiterjesztéseknél a **_curl_**-hoz is tegyük be a pipát!
 
 #### Egyéni beállítások
 Az egyeni_beallitasok.php-ban a NAS IP címét, a használt portot, a felhasználónevet és hozzá tartozó jelszót be kell állítani ahhoz, hogy megjelenítse a futtatott torrenteket az oldal.
