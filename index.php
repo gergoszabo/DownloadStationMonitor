@@ -1,10 +1,11 @@
 <?php
 $elotte = microtime(true);
 @session_start();
+define('SL_NEM', 0);
 define('SL_CSAT', 1);
 define('SL_OSSZ', 2);
 define('SL_MIX', 4);
-define('VERSION', '0.6.2');
+define('VERSION', '0.6.3');
 
 function get($url) {
 	$ch = curl_init();
@@ -59,7 +60,9 @@ include 'session_2fa.php';
 			<th><i>Le</i></th>
 			<th><i>Fel</i></th>
 			<th><i>Tracker</i></th>
+			<? if(SL != SL_NEM) { ?>
 			<th><i>S/L</i></th>
+			<? } ?>
 			<th><i>Áll.</i></th>
 		</tr>
 <?
@@ -168,6 +171,7 @@ include 'session_2fa.php';
 				<td class="right size"><?=$speed_download?> MB/s</td>
 				<td class="right size"><?=$speed_upload?> MB/s</td>
 				<td class="center"><?=$trackerstatus?></td>
+				<? if(SL != SL_NEM) { ?>
 				<td class="center">
 				<?
 					switch(SL) {
@@ -183,6 +187,7 @@ include 'session_2fa.php';
 					}
 				?>
 				</td>
+				<? } ?>
 				<td class="center">
 					<img src="images_status/<?=$status?>.png" width=15 height=15 align="center">
 				</td>

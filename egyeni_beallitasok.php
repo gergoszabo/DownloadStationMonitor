@@ -10,6 +10,7 @@ define('PASS', 'pass');
 define('UJRATOLTES', 5 * 60);
 
 // melyik seeder/leecher értéket jelenítse meg:
+// egyiket sem:			SL_NEM
 // csatlakozottakat: 	SL_CSAT
 // összeset: 			SL_OSSZ
 // mindkettőt:			SL_MIX
