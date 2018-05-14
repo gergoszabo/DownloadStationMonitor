@@ -51,16 +51,9 @@ function friendlySpeed($speed) {
     return sprintf('%.1f KB/s', round($speed / KB, 2));
 }
 
-function getRss() {
-    $url = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/RSSsite.cgi?api=SYNO.'
-        .'DownloadStation.RSS.Site&version=1&method=list&offset=10&limit=10&sid='.$_SESSION['sid'];
-
-    $response = get($url);
-    var_dump($response);
-}
-
 include 'egyeni_beallitasok.php';
 include 'session_2fa.php';
+include 'rss.php';
 
 ?>
 <html> 
@@ -75,7 +68,7 @@ include 'session_2fa.php';
 		Az oldal automatikusan frissül<br>
 		Utolsó oldal betöltése: <?=date('H:i:s')?>
 	</div>
-	<h2 class="center"><i>Download Station Monitor</i></h2>	
+	<h2 class="center"><i>Download Station Monitor <?=RSS ? '<a href="/?rss">rss</a>' : ' '?></i></h2>
 	<table id="maintable" class="center">
 		<tr>
 			<th><i>Torrent Neve</i></th>

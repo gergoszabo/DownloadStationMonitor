@@ -22,6 +22,9 @@ define('TWOFA', false);
 // https vagy http használata
 define('PROTOCOL', 'http');
 
+// rss elemek megjelenítése
+define('RSS', false);
+
 // hibakereséshez true, egyébként false
 define('DEBUG', false);
 
