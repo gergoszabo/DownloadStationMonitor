@@ -34,7 +34,11 @@ Megadhatjuk, hogy http vagy https protokolt szeretnénk használni
 define('PROTOCOL', 'http');
 ```
 
-Lehetőség van a Download Stationben felvett RSS csatornák megjelenítésére is, alapértelmezetten nem látszik
+Lehetőség van a Download Stationben felvett RSS csatornák megjelenítésére is, alapértelmezetten nem látszik.
+Valamint megadható, hogy hány elem jelenjen meg
 ```php
+// rss elemek megjelenítése
 define('RSS', false);
+// megjelenő elemek száma
+define('RSS_LIMIT', 500);
 ```

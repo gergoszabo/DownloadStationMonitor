@@ -24,6 +24,8 @@ define('PROTOCOL', 'http');
 
 // rss elemek megjelenítése
 define('RSS', false);
+// megjelenő elemek száma
+define('RSS_LIMIT', 500);
 
 // hibakereséshez true, egyébként false
 define('DEBUG', false);

@@ -11,7 +11,7 @@ if(RSS && isset($_GET['rss'])) {
     if($rss->success) {
         foreach($rss->data->sites as $site) {
             $url = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/RSSfeed.cgi?api='
-                .'SYNO.DownloadStation.RSS.Feed&version=1&method=list&offset=0&limit=100&id='
+                .'SYNO.DownloadStation.RSS.Feed&version=1&method=list&offset=0&limit='.RSS_LIMIT.'&id='
                 .$site->id.'&_sid='.$_SESSION['sid'];
 
             $result = json_decode(get($url));
@@ -35,6 +35,7 @@ if(RSS && isset($_GET['rss'])) {
             <tr>
                 <th><i>Név</i></th>
                 <th><i>Időpont</i></th>
+                <th><i>Letöltés</i></th>
             </tr>
 <?
             foreach($result->data->feeds as $feed) {
@@ -42,6 +43,7 @@ if(RSS && isset($_GET['rss'])) {
                 <tr>
                     <td><?=$feed->title?></td>
                     <td><?=date('Y-m-d H:i:s', $feed->time)?></td>
+                    <td><a href="<?=$feed->external_link?>">Letölt</a></td>
                 </tr>
 <?
             }
