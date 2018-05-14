@@ -33,3 +33,8 @@ Megadhatjuk, hogy http vagy https protokolt szeretnénk használni
 // https vagy http használata
 define('PROTOCOL', 'http');
 ```
+
+Lehetőség van a Download Stationben felvett RSS csatornák megjelenítésére is, alapértelmezetten nem látszik
+```php
+define('RSS', false);
+```

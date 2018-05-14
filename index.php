@@ -5,7 +5,7 @@ define('SL_NEM', 0);
 define('SL_CSAT', 1);
 define('SL_OSSZ', 2);
 define('SL_MIX', 4);
-define('VERSION', '0.6.3');
+define('VERSION', '0.7.0');
 
 define('KB', 1024);
 define('MB', KB * 1024);
