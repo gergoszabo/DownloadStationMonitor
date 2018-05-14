@@ -7,6 +7,11 @@ define('SL_OSSZ', 2);
 define('SL_MIX', 4);
 define('VERSION', '0.6.3');
 
+define('KB', 1024);
+define('MB', KB * 1024);
+define('GB', MB * 1024);
+
+
 function get($url) {
 	$ch = curl_init();
 
@@ -30,6 +35,28 @@ function get($url) {
 function substruntil($source, $until) {
 	$pos = strpos($source, $until);
 	return substr($source, 0, $pos);
+}
+
+function friendlySize($size) {
+    if($size > GB)
+        return sprintf('%.2f GB', round($size / GB, 2));
+
+    return sprintf('%.1f MB', round($size / MB, 2));
+}
+
+function friendlySpeed($speed) {
+    if($speed > MB)
+        return sprintf('%.1f MB/s', round($speed / MB, 2));
+
+    return sprintf('%.1f KB/s', round($speed / KB, 2));
+}
+
+function getRss() {
+    $url = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/RSSsite.cgi?api=SYNO.'
+        .'DownloadStation.RSS.Site&version=1&method=list&offset=10&limit=10&sid='.$_SESSION['sid'];
+
+    $response = get($url);
+    var_dump($response);
 }
 
 include 'egyeni_beallitasok.php';
@@ -66,9 +93,6 @@ include 'session_2fa.php';
 			<th><i>Áll.</i></th>
 		</tr>
 <?
-	define('MB', 1024 * 1024);
-	define('GB', MB * 1024);
-	 
 	$tasksUrl = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/task.cgi?api='.
 		'SYNO.DownloadStation.Task&version=1&method=list&_sid='.$_SESSION['sid'].
 		'&additional=transfer,detail,tracker';
@@ -109,18 +133,12 @@ include 'session_2fa.php';
 		$speed_upload = (float)$task['additional']['transfer']['speed_upload'];
 		$ratio = round($size_uploaded / ($size_downloaded > 0 ? $size_downloaded : 1), 2);
 
-		$size = round($size / GB,2);
-		$size_downloaded = round($size_downloaded / GB, 2);
-		$size_uploaded = round($size_uploaded / GB, 2);
-		$speed_download = round($speed_download / MB, 2);
-		$speed_upload = round($speed_upload / MB, 2);
-
 		$progress = round($size_downloaded /($size > 0 ? $size : 1) * 100, 1);
 
 		$trackerstatuses = array();
-		$totalSeeds = 0;
+		$seeds = 0;
 		$connectedSeeds = (float)$task['additional']['detail']['connected_seeders'];
-		$totalPeers = 0;
+		$peers = 0;
 		$connectedPeers = (float)$task['additional']['detail']['connected_leechers'];
 
 		if(isset($task['additional']['tracker'])) {
@@ -160,16 +178,16 @@ include 'session_2fa.php';
 ?>
 			<tr>
 				<td><?=$title?></td>
-				<td class="right size"><?=$size?> GB</td>
-				<td class="right"><?=$size_downloaded?> GB</td>
-				<td class="right"><?=$size_uploaded?> GB</td> 
+				<td class="right size"><?=friendlySize($size)?></td>
+				<td class="right"><?=friendlySize($size_downloaded)?></td>
+				<td class="right"><?=friendlySize($size_uploaded)?></td>
 				<td>
 					&nbsp;<?=$progress?>%&nbsp;
 					<progress value="<?=$size_downloaded?>" max="<?=$size?>" />
 				</td> 
 				<td class="right"><?=$ratio?></td> 
-				<td class="right size"><?=$speed_download?> MB/s</td>
-				<td class="right size"><?=$speed_upload?> MB/s</td>
+				<td class="right size"><?=friendlySpeed($speed_download)?></td>
+				<td class="right size"><?=friendlySpeed($speed_upload)?></td>
 				<td class="center"><?=$trackerstatus?></td>
 				<? if(SL != SL_NEM) { ?>
 				<td class="center">
