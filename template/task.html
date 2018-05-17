@@ -1,0 +1,28 @@
+<tr>
+    <td>##TITLE##</td>
+    <td>##SIZE##</td>
+    <td class="d-sm-none d-md-table-cell">##DOWN##</td>
+    <td class="d-sm-none d-md-table-cell">##UP##</td>
+    <td class="d-sm-none d-md-table-cell">##RATIO##</td>
+    <td>##SPEEDDOWN##</td>
+    <td>##SPEEDUP##</td>
+    <td>##TRACKER##</td>
+    <td class="d-sm-none d-md-table-cell">##SL##</td>
+    <td class="d-sm-none d-md-table-cell">##STATUS##</td>
+    <td>
+        <div class="btn-group" role="group" aria-label="Műveletek">
+            <form id="frmstart##ID##" method="post">
+                <input type="hidden" value="##ID##" name="start">
+                <a href="#" class="btn btn-primary btn-sm ##START_VISIBLE_CLASS##" onclick="document.forms['frmstart##ID##'].submit(); return false;">&nbsp;&lt;&nbsp;</a>
+            </form>
+            <form id="frmpause##ID##" method="post">
+                <input type="hidden" value="##ID##" name="pause">
+                <a href="#" class="btn btn-secondary btn-sm ##PAUSE_VISIBLE_CLASS##" onclick="document.forms['frmpause##ID##'].submit(); return false;">&nbsp;II&nbsp;</a>
+            </form>
+            <form id="frmremove##ID##" method="post">
+                <input type="hidden" value="##ID##" name="remove">
+                <a href="#" class="btn btn-danger btn-sm ##REMOVE_VISIBLE_CLASS##" onclick="document.forms['frmremove##ID##'].submit(); return false;">&nbsp;X&nbsp;</a>
+            </form>
+        </div>
+    </td>
+</tr>
