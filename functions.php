@@ -1,11 +1,29 @@
 <?php
 
+function getBaseUrl()
+{
+    // output: /myproject/index.php
+    $currentPath = $_SERVER['PHP_SELF'];
+
+    // output: Array ( [dirname] => /myproject [basename] => index.php [extension] => php [filename] => index )
+    $pathInfo = pathinfo($currentPath);
+
+    // output: localhost
+    $hostName = $_SERVER['HTTP_HOST'];
+
+    // output: http://
+    $protocol = strtolower(substr($_SERVER["SERVER_PROTOCOL"], 0, 5)) == 'https://' ? 'https://' : 'http://';
+
+    // return: http://localhost/myproject/
+    return $protocol . $hostName . $pathInfo['dirname'];
+}
+
 function displayErrorAndDie($error)
 {
     $template = file_get_contents('template/error.html');
 
     $template = str_replace('##ERROR##', $error, $template);
-    $template = str_replace('##BASEURL##', BASEURL, $template);
+    $template = str_replace('##BASEURL##', getBaseUrl(), $template);
 
     die($template);
 }
@@ -40,7 +58,7 @@ function startTask()
         displayErrorAndDie(print_r(array($decodedRequest, $resumeUrl), true));
     }
 
-    header('Location: ' . BASEURL);
+    header('Location: ' . getBaseUrl());
     exit();
 }
 
@@ -53,7 +71,7 @@ function pauseTask()
         displayErrorAndDie(print_r(array($decodedRequest, $pauseUrl), true));
     }
 
-    header('Location: ' . BASEURL);
+    header('Location: ' . getBaseUrl());
     exit();
 }
 
@@ -66,7 +84,7 @@ function removeTask()
         displayErrorAndDie(print_r(array($decodedRequest, $removeUrl), true));
     }
 
-    header('Location: ' . BASEURL);
+    header('Location: ' . getBaseUrl());
     exit();
 }
 

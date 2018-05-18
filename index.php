@@ -2,7 +2,7 @@
 $elotte = microtime(true);
 @session_start();
 
-define('VERSION', '0.9.0');
+define('VERSION', '0.9.1');
 
 define('KB', 1024);
 define('MB', KB * 1024);
@@ -25,6 +25,9 @@ if (TWOFACTOR)
 include 'session.php';
 
 // itt már be vagyunk jelentkezve
+
+if (isset($_GET['rss']))
+    include 'rss.php';
 
 if (isset($_POST['start']))
     startTask();
@@ -117,6 +120,8 @@ $page = str_replace('##VERSION##', VERSION, $page);
 $page = str_replace('##MS##', round(microtime(true) - $elotte, 3), $page);
 $page = str_replace('##TOTALDOWNSPEED##', friendlySpeed($totalDownSpeed), $page);
 $page = str_replace('##TOTALUPSPEED##', friendlySpeed($totalUpSpeed), $page);
+if (RSS)
+    $page = str_replace('##RSS##', ' <a href="?rss">RSS</a>', $page);
 
 $rows = implode(' ', $taskHtmls);
 $page = str_replace('##ROWS##', $rows, $page);
