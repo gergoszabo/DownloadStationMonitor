@@ -1,258 +1,129 @@
 <?php
 $elotte = microtime(true);
 @session_start();
-define('SL_NEM', 0);
-define('SL_CSAT', 1);
-define('SL_OSSZ', 2);
-define('SL_MIX', 4);
-define('VERSION', '0.7.0');
+
+define('VERSION', '0.9.1');
 
 define('KB', 1024);
 define('MB', KB * 1024);
 define('GB', MB * 1024);
+define('STATUS_PRIOR_ERROR', 10);
+define('STATUS_PRIOR_ACTIONABLE', 8);
+define('STATUS_PRIOR_OTHER', 6);
+define('STATUS_PRIOR_INTERMEDIATE', 4);
+define('STATUS_PRIOR_OK', 1);
 
+include 'config.php';
+include 'functions.php';
 
-function get($url) {
-	$ch = curl_init();
+if (isset($_GET['fresh']))
+    session_unset();
 
-	$defaults = array(
-		CURLOPT_URL => $url,
-		CURLOPT_HEADER => 0,
-		CURLOPT_RETURNTRANSFER => TRUE,
-		CURLOPT_TIMEOUT => 4,
-		CURLOPT_SSL_VERIFYHOST => 0,
-		CURLOPT_SSL_VERIFYPEER => 0,
-	);
-	curl_setopt_array($ch, $defaults);
+if (TWOFACTOR)
+    include 'twofactorauth.php';
 
-	$result = curl_exec($ch);
+include 'session.php';
 
-	curl_close($ch);
+// itt már be vagyunk jelentkezve
 
-	return $result;
+if (isset($_GET['rss']))
+    include 'rss.php';
+
+if (isset($_POST['start']))
+    startTask();
+
+if (isset($_POST['pause']))
+    pauseTask();
+
+if (isset($_POST['remove']))
+    removeTask();
+
+$tasks = getTasks();
+
+$pageTemplate = file_get_contents('template/tasks.html');
+$taskTemplate = file_get_contents('template/task.html');
+
+$taskHtmls = array();
+$totalDownSpeed = 0;
+$totalUpSpeed = 0;
+$hasIntermediateStatus = false;
+
+foreach ($tasks['data']['tasks'] as $task) {
+    $html = str_replace('##ID##', $task['id'], $taskTemplate);
+    $html = str_replace('##TITLE##', $task['title'], $html);
+    $html = str_replace('##SIZE##', friendlySize((float)$task['size']), $html);
+    $sizeDown = (float)$task['additional']['transfer']['size_downloaded'];
+    $html = str_replace('##DOWN##', friendlySize($sizeDown), $html);
+    $sizeUp = (float)$task['additional']['transfer']['size_uploaded'];
+    $up = friendlySize($sizeUp);
+    $html = str_replace('##UP##', $up, $html);
+
+    $ratio = round($sizeUp / ($sizeDown > 0 ? $sizeDown : 1), 2);
+    $html = str_replace('##RATIO##', $ratio, $html);
+
+    $speedDown = (float)$task['additional']['transfer']['speed_download'];
+    $totalDownSpeed += $speedDown;
+    $html = str_replace('##SPEEDDOWN##', friendlySpeed($speedDown), $html);
+    $speedUp = (float)$task['additional']['transfer']['speed_upload'];
+    $totalUpSpeed += $speedUp;
+    $html = str_replace('##SPEEDUP##', friendlySpeed($speedUp), $html);
+
+    $trackerStatuses = array();
+
+    if (isset($task['additional']['tracker'])) {
+        $tracker = $task['additional']['tracker'];
+
+        if (is_array($tracker)) {
+            // TODO: map?
+            foreach ($tracker as $t) {
+                if (isset($t['status']) && strlen($t['status']) > 1) {
+                    $trackerStatuses[] = $t['status'];
+                }
+            }
+        } else {
+            try {
+                $trackerStatuses[] = $tracker[0]['status'];
+            } catch (Exception $ex) {
+            }
+        }
+    } else {
+        $trackerStatuses[] = 'Success';
+    }
+
+    $html = str_replace('##TRACKER##', toTrackerStatus(implode(',', array_unique($trackerStatuses))), $html);
+
+    $connectedSeeds = (float)$task['additional']['detail']['connected_seeders'];
+    $connectedLeechers = (float)$task['additional']['detail']['connected_leechers'];
+
+    $html = str_replace('##SL##', $connectedSeeds . '/' . $connectedLeechers, $html);
+    $html = str_replace('##STATUS##', getStatusHtml($task['status']), $html);
+
+    $pausable = $task['status'] !== 'paused';
+    $startable = $task['status'] === 'paused' || $task['status'] === 'finished';
+    $removable = $startable || $task['status'] === 'seeding' || $task['status'] === 'downloading';
+
+    $hasIntermediateStatus |= getStatusPriority($task['status']) === STATUS_PRIOR_INTERMEDIATE;
+
+    $html = str_replace('##START_VISIBLE_CLASS##', ($startable ? 'visible' : 'invisible'), $html);
+    $html = str_replace('##PAUSE_VISIBLE_CLASS##', ($pausable ? 'visible' : 'invisible'), $html);
+    $html = str_replace('##REMOVE_VISIBLE_CLASS##', ($removable ? 'visible' : 'invisible'), $html);
+
+    $taskHtmls[] = $html;
+    unset($html);
 }
 
-function substruntil($source, $until) {
-	$pos = strpos($source, $until);
-	return substr($source, 0, $pos);
-}
+$page = str_replace('##NUMTASKS##', count($tasks['data']['tasks']), $pageTemplate);
+$page = str_replace('##REFRESH##', $hasIntermediateStatus ? 2 : UJRATOLTES, $page);
+$page = str_replace('##BODY_THEME##', (DARK ? 'bg-dark text-light' : 'bg-light text-dark'), $page);
+$page = str_replace('##TABLE_THEME##', (DARK ? 'table-dark' : 'table-light'), $page);
+$page = str_replace('##VERSION##', VERSION, $page);
+$page = str_replace('##MS##', round(microtime(true) - $elotte, 3), $page);
+$page = str_replace('##TOTALDOWNSPEED##', friendlySpeed($totalDownSpeed), $page);
+$page = str_replace('##TOTALUPSPEED##', friendlySpeed($totalUpSpeed), $page);
+if (RSS)
+    $page = str_replace('##RSS##', ' <a href="?rss">RSS</a>', $page);
 
-function friendlySize($size) {
-    if($size > GB)
-        return sprintf('%.2f GB', round($size / GB, 2));
+$rows = implode(' ', $taskHtmls);
+$page = str_replace('##ROWS##', $rows, $page);
 
-    return sprintf('%.1f MB', round($size / MB, 2));
-}
-
-function friendlySpeed($speed) {
-    if($speed > MB)
-        return sprintf('%.1f MB/s', round($speed / MB, 2));
-
-    return sprintf('%.1f KB/s', round($speed / KB, 2));
-}
-
-include 'egyeni_beallitasok.php';
-include 'session_2fa.php';
-include 'rss.php';
-
-?>
-<html> 
-<head>	 
-	<title>Download Station Monitor</title>
-	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-	<link type="text/css" rel="stylesheet" href="stylesheet.css"/>
-	<meta http-equiv="refresh" content="<?=UJRATOLTES?>">
-</head>
-<body>
-	<div class="right">
-		Az oldal automatikusan frissül<br>
-		Utolsó oldal betöltése: <?=date('H:i:s')?>
-	</div>
-	<h2 class="center"><i>Download Station Monitor <?=RSS ? '<a href="/?rss">rss</a>' : ' '?></i></h2>
-	<table id="maintable" class="center">
-		<tr>
-			<th><i>Torrent Neve</i></th>
-			<th><i>Méret</i></th>
-			<th><i>Letöltve</i></th>
-			<th><i>Feltöltve</i></th>
-			<th><i>Folyamat</i></th>
-			<th><i>Átlag</i></th>
-			<th><i>Le</i></th>
-			<th><i>Fel</i></th>
-			<th><i>Tracker</i></th>
-			<? if(SL != SL_NEM) { ?>
-			<th><i>S/L</i></th>
-			<? } ?>
-			<th><i>Áll.</i></th>
-		</tr>
-<?
-	$tasksUrl = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/task.cgi?api='.
-		'SYNO.DownloadStation.Task&version=1&method=list&_sid='.$_SESSION['sid'].
-		'&additional=transfer,detail,tracker';
-
-	if(DEBUG) {
-		$_SESSION['debug'][] = 'tasksUrl: '.substruntil($tasksUrl, '/webapi/');
-	}
-
-	$decodedrequest = json_decode(get($tasksUrl), true);
-
-	$totaldownloads = $decodedrequest['data']['total']; //get total number of downloads (for statistics)
-
-	if(DEBUG) {
-		$_SESSION['debug'][] = 'taskCount: '. (isset($decodedrequest['data']['tasks']) ? count($decodedrequest['data']['tasks']) : NaN);
-	}
-
-	if(isset($decodedrequest['data']['tasks']))
-		usort($decodedrequest['data']['tasks'], function($a, $b) {
-			if($a['status'] == $b['status']) {
-				return strcmp($a['title'], $b['title']);
-			}
-
-			return strcmp($a['status'], $b['status']);
-		});
-	else
-		// ha nincs semmi, akkor üres
-		$decodedrequest['data']['tasks'] = array();
-	
-	foreach($decodedrequest['data']['tasks'] as $task) {
-		
-		$title = $task['title'];
-		$size = (float)$task['size'];
-		$status = $task['status'];
-
-		$size_downloaded = (float)$task['additional']['transfer']['size_downloaded'];
-		$size_uploaded = (float)$task['additional']['transfer']['size_uploaded'];
-		$speed_download = (float)$task['additional']['transfer']['speed_download'];
-		$speed_upload = (float)$task['additional']['transfer']['speed_upload'];
-		$ratio = round($size_uploaded / ($size_downloaded > 0 ? $size_downloaded : 1), 2);
-
-		$progress = round($size_downloaded /($size > 0 ? $size : 1) * 100, 1);
-
-		$trackerstatuses = array();
-		$seeds = 0;
-		$connectedSeeds = (float)$task['additional']['detail']['connected_seeders'];
-		$peers = 0;
-		$connectedPeers = (float)$task['additional']['detail']['connected_leechers'];
-
-		if(isset($task['additional']['tracker'])) {
-			$tracker = $task['additional']['tracker'];
-
-			if(is_array($tracker)) {
-				foreach($tracker as $t) {
-					if(isset($t['status']) && strlen($t['status'])) {
-						$trackerstatuses[] = $t['status'];
-
-						$s = (float)$t['seeds'];
-						if($s > 0)
-							$seeds += $s;
-
-						$p = (float)$t['peers'];
-						if($p > 0)
-							$peers += $p;
-					}
-				}
-			}
-			else {
-				try {
-					$trackerstatuses[] = $tracker[0]['status'];
-
-					$seeds = (float)$tracker[0]['seeds'];
-					$peers = (float)$tracker[0]['peers'];
-				}
-				catch (Exception $ex) {
-				}
-			}
-		}
-		else {
-			$trackerstatuses[] = '-';
-		}
-		
-		$trackerstatus = implode(',', array_unique($trackerstatuses));
-?>
-			<tr>
-				<td><?=$title?></td>
-				<td class="right size"><?=friendlySize($size)?></td>
-				<td class="right"><?=friendlySize($size_downloaded)?></td>
-				<td class="right"><?=friendlySize($size_uploaded)?></td>
-				<td>
-					&nbsp;<?=$progress?>%&nbsp;
-					<progress value="<?=$size_downloaded?>" max="<?=$size?>" />
-				</td> 
-				<td class="right"><?=$ratio?></td> 
-				<td class="right size"><?=friendlySpeed($speed_download)?></td>
-				<td class="right size"><?=friendlySpeed($speed_upload)?></td>
-				<td class="center"><?=$trackerstatus?></td>
-				<? if(SL != SL_NEM) { ?>
-				<td class="center">
-				<?
-					switch(SL) {
-						case SL_CSAT:
-							echo "$seeds / $peers";
-						break;
-						case SL_OSSZ:
-							echo "$connectedSeeds / $connectedPeers";
-						break;
-						case SL_MIX:
-							echo "$seeds / $peers ($connectedSeeds / $connectedPeers)";
-						break;
-					}
-				?>
-				</td>
-				<? } ?>
-				<td class="center">
-					<img src="images_status/<?=$status?>.png" width=15 height=15 align="center">
-				</td>
-			</tr>
-<?
-	}
-	
-	$speedsUrl = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/statistic.cgi?api='.
-		'SYNO.DownloadStation.Statistic&version=1&method=getinfo&_sid='.$_SESSION['sid'];
-
-	if(DEBUG) {
-		$_SESSION['debug'][] = 'speedsUrl: '.substruntil($speedsUrl, '/webapi/');
-	}
-
-	$decodedspeeds = json_decode(get($speedsUrl),true);
-	if(isset($decodedspeeds['data'])) {
-		$totaldownspeed = $decodedspeeds['data']['speed_download'] / MB;
-		$totalupspeed = $decodedspeeds['data']['speed_upload'] / MB;
-	}
-	else {
-		$totaldownspeed = $totalupspeed = NaN;
-	}
-  
-?>
-	</table>
-	<br>
-	<table class="center">
-		<th colspan="6"><i>Statisztika</i></th>
-		<tr>
-			<td class="autowidth"><b>Összes torrent:</b></td>
-			<td class="autowidth"><?=$totaldownloads?></td>
-			<td class="autowidth"><b>Le seb.:</b></td>
-			<td class="autowidth"><?=round($totaldownspeed, 2)?> MB/s</td>
-			<td class="autowidth"><b>Fel seb.:</b></td>
-			<td class="autowidth"><?=round($totalupspeed, 2)?> MB/s</td>
-		</tr>
-	</table> 
-<footer>
-Verzió: <?=VERSION?>
-<br><small>Generálva: <?=round(microtime(true) - $elotte, 2)?> másodperc</small>
-</footer>
-<?
-if(DEBUG) {
-?>
-<pre>
-<?
-	foreach($_SESSION['debug'] as $d) {
-		echo $d.PHP_EOL;
-	}
-?>
-</pre>
-<?
-	unset($_SESSION['debug']);
-}
-?>
-</body>
-</html>
+echo $page;

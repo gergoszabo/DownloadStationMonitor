@@ -1,59 +1,58 @@
-<?
-if(RSS && isset($_GET['rss'])) {
+<?php
+if (RSS && isset($_GET['rss'])) {
 
-    $url = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/RSSsite.cgi?api=SYNO.'
-        .'DownloadStation.RSS.Feed&version=1&method=list&_sid='.$_SESSION['sid'];
+    $url = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/RSSsite.cgi?api=SYNO.'
+        . 'DownloadStation.RSS.Feed&version=1&method=list&_sid=' . $_SESSION['sid'];
 
-    $rss = json_decode(get($url));
+    $rss = json_decode(get($url), true);
 
-    $rssData = array();
+    if (isset($rss['error'])) {
+        displayErrorAndDie(print_r(array($rss, $url), true));
+    }
 
-    if($rss->success) {
-        foreach($rss->data->sites as $site) {
-            $url = PROTOCOL.'://'.IP.':'.PORT.'/webapi/DownloadStation/RSSfeed.cgi?api='
-                .'SYNO.DownloadStation.RSS.Feed&version=1&method=list&offset=0&limit='.RSS_LIMIT.'&id='
-                .$site->id.'&_sid='.$_SESSION['sid'];
+    $rssData = '';
+    $rssFeedTemplate = file_get_contents('template/rssFeedTemplate.html');
+    $rssFeedItemTemplate = file_get_contents('template/rssFeedItemTemplate.html');
 
-            $result = json_decode(get($url));
-            $rssData[$site->title] = $result;
+    if ($rss['success']) {
+        foreach ($rss['data']['sites'] as $site) {
+            $url = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/RSSfeed.cgi?api='
+                . 'SYNO.DownloadStation.RSS.Feed&version=1&method=list&offset=0&limit=' . RSS_LIMIT . '&id='
+                . $site['id'] . '&_sid=' . $_SESSION['sid'];
+
+            $result = json_decode(get($url), true);
+
+            if (isset($rss['error'])) {
+                displayErrorAndDie(print_r(array($result, $url), true));
+            }
+
+            $siteHtml = str_replace('##SITE##', $site['title'], $rssFeedTemplate);
+            $items = '';
+
+            foreach ($result['data']['feeds'] as $feed) {
+                $item = str_replace('##TITLE##', $feed['title'], $rssFeedItemTemplate);
+                $item = str_replace('##TIME##', date('Y-m-d H:i:s', $feed['time']), $item);
+                $item = str_replace('##LINK##', $feed['external_link'], $item);
+
+                $items .= $item;
+            }
+
+            $feed = str_replace('##ROWS##', $items, $siteHtml);
+
+            $rssData .= $feed;
         }
     }
-?>
 
-<html>
-<head>
-	<title>Download Station Monitor</title>
-	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-	<link type="text/css" rel="stylesheet" href="stylesheet.css"/>
-</head>
-<body>
-<?
-    foreach($rssData as $site => $result) {
-?>
-        <center><h4><?=$site?></h4></center>
-        <table id="maintable" class="center">
-            <tr>
-                <th><i>Név</i></th>
-                <th><i>Időpont</i></th>
-                <th><i>Letöltés</i></th>
-            </tr>
-<?
-            foreach($result->data->feeds as $feed) {
-?>
-                <tr>
-                    <td><?=$feed->title?></td>
-                    <td><?=date('Y-m-d H:i:s', $feed->time)?></td>
-                    <td><a href="<?=$feed->external_link?>">Letölt</a></td>
-                </tr>
-<?
-            }
-?>
-        </table>
-<?
-    }
-?>
-</body>
-</html>
-<?
-    die();
+    $rssTemplate = file_get_contents('template/rss.html');
+
+    $page = str_replace('##FEEDS##', $rssData, $rssTemplate);
+    $page = str_replace('##BASEURL##', getBaseUrl(), $page);
+    $page = str_replace('##BODY_THEME##', (DARK ? 'bg-dark text-light' : 'bg-light text-dark'), $page);
+    $page = str_replace('##TABLE_THEME##', (DARK ? 'table-dark' : 'table-light'), $page);
+    $page = str_replace('##VERSION##', VERSION, $page);
+    $page = str_replace('##REFRESH##', RSS_UJRATOLTES, $page);
+    $page = str_replace('##MS##', round(microtime(true) - $elotte, 2), $page);
+
+    echo $page;
+    exit();
 }
