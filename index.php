@@ -2,7 +2,7 @@
 $elotte = microtime(true);
 @session_start();
 
-define('VERSION', '0.9.1');
+define('VERSION', '0.9.3');
 
 define('KB', 1024);
 define('MB', KB * 1024);
@@ -24,8 +24,18 @@ if (TWOFACTOR)
 
 include 'session.php';
 
-// itt már be vagyunk jelentkezve
 
+if (isset($_POST['config']))
+    setConfig();
+
+if (isset($_GET['config']))
+    getConfig($elotte);
+
+// itt már be vagyunk jelentkezve
+/*
+if (isset($_GET['create']))
+    newTaskFromUrl($_GET['create']);
+*/
 if (isset($_GET['rss']))
     include 'rss.php';
 
@@ -117,13 +127,13 @@ $page = str_replace('##REFRESH##', $hasIntermediateStatus ? 2 : UJRATOLTES, $pag
 $page = str_replace('##BODY_THEME##', (DARK ? 'bg-dark text-light' : 'bg-light text-dark'), $page);
 $page = str_replace('##TABLE_THEME##', (DARK ? 'table-dark' : 'table-light'), $page);
 $page = str_replace('##VERSION##', VERSION, $page);
-$page = str_replace('##MS##', round(microtime(true) - $elotte, 3), $page);
 $page = str_replace('##TOTALDOWNSPEED##', friendlySpeed($totalDownSpeed), $page);
 $page = str_replace('##TOTALUPSPEED##', friendlySpeed($totalUpSpeed), $page);
 if (RSS)
-    $page = str_replace('##RSS##', ' <a href="?rss">RSS</a>', $page);
+    $page = str_replace('##RSS##', ' <a class="btn btn-sm btn-outline-info" href="?rss">RSS</a>', $page);
 
 $rows = implode(' ', $taskHtmls);
 $page = str_replace('##ROWS##', $rows, $page);
+$page = str_replace('##MS##', round(microtime(true) - $elotte, 2), $page);
 
 echo $page;

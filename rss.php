@@ -33,6 +33,7 @@ if (RSS && isset($_GET['rss'])) {
                 $item = str_replace('##TITLE##', $feed['title'], $rssFeedItemTemplate);
                 $item = str_replace('##TIME##', date('Y-m-d H:i:s', $feed['time']), $item);
                 $item = str_replace('##LINK##', $feed['external_link'], $item);
+                # $item = str_replace('##URLENCODEDLINK##', urlencode($feed['external_link']), $item);
 
                 $items .= $item;
             }

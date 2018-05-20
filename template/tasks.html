@@ -8,11 +8,16 @@
     <title>DownloadStationMonitor</title>
 </head>
 <body class="##BODY_THEME##">
-<div class="container h3"><i>Download Station Monitor <span class="text-muted small">##RSS## ##VERSION##</span></i>
+<div class="container-fluid d-flex">
+    <div class="h3 font-italic d-flex flex-grow-1 justify-content-center align-items-center">Download Station Monitor</div>
+    <div><a href="#" class="btn btn-sm btn-outline-info">##MS## s</a></div>
+    <div><a href="#" class="btn btn-sm btn-outline-info">v ##VERSION##</a></div>
+    <div>##RSS##</div>
+    <div><a class="btn btn-sm btn-outline-info" href="?config">Beállítások</a> </div>
 </div>
 <table class="table table-striped container-fluid ##TABLE_THEME##">
     <tr>
-        <th><i>Torrent Neve</i></th>
+        <th><i>Torrent Neve (##NUMTASKS## db)</i></th>
         <th><i>Méret</i></th>
         <th><i>Letöltve</i></th>
         <th><i>Feltöltve</i></th>
@@ -26,11 +31,10 @@
     </tr>
     ##ROWS##
     <tr>
-        <td colspan="5">Összes torrent: ##NUMTASKS##</td>
+        <td colspan="5"></td>
         <td>##TOTALDOWNSPEED##</td>
         <td>##TOTALUPSPEED##</td>
-        <td colspan="3"></td>
-        <td>##MS## sec.</td>
+        <td colspan="4"></td>
     </tr>
 </table>
 </body>

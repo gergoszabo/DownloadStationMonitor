@@ -49,6 +49,23 @@ function get($url)
     return $result;
 }
 
+/*
+function newTaskFromUrl($url)
+{
+    $createUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=3&method=create&_sid=' . $_SESSION['sid'] . '&uri=' . urldecode($url);
+    #echo '<pre>' . $createUrl . '</pre><br/>';
+    $decodedRequest = json_decode(get($createUrl), true);
+
+    #echo '<pre>' . print_r($decodedRequest, true) . '</pre><br/>';
+
+    if (isset($decodedRequest['error'])) {
+        displayErrorAndDie(print_r(array($decodedRequest, $createUrl), true));
+    }
+
+    header('Location: ' . getBaseUrl());
+    exit();
+}
+*/
 function startTask()
 {
     $resumeUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=resume&id=' . $_POST['start'] . '&_sid=' . $_SESSION['sid'];
@@ -192,4 +209,52 @@ function getTasks()
         usort($decodedRequest['data']['tasks'], "sortTasks");
 
     return $decodedRequest;
+}
+
+function getConfig($elotte)
+{
+    $configUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/info.cgi?api=SYNO.DownloadStation.Info&version=1&method=getconfig&_sid=' . $_SESSION['sid'];
+
+    $config = json_decode(get($configUrl), true);
+
+    if (isset($config['error'])) {
+        displayErrorAndDie($config['error']);
+    }
+
+    /*
+     * [bt_max_download] => 3500
+     * [bt_max_upload] => 600
+     * */
+
+    $configPage = file_get_contents('template/config.html');
+    $configPage = str_replace('##BT_MAX_DOWNLOAD##', $config['data']['bt_max_download'], $configPage);
+    $configPage = str_replace('##BT_MAX_UPLOAD##', $config['data']['bt_max_upload'], $configPage);
+    $configPage = str_replace('##BODY_THEME##', (DARK ? 'bg-dark text-light' : 'bg-light text-dark'), $configPage);
+    $configPage = str_replace('##VERSION##', VERSION, $configPage);
+    $configPage = str_replace('##MS##', round(microtime(true) - $elotte, 2), $configPage);
+
+    echo $configPage;
+    exit();
+}
+
+function setConfig()
+{
+    if (!isset($_POST['bt_max_download']) || !is_numeric($_POST['bt_max_download']))
+        displayErrorAndDie('Letöltési limit helytelen érték!');
+
+    if (!isset($_POST['bt_max_upload']) || !is_numeric($_POST['bt_max_upload']))
+        displayErrorAndDie('Feltöltési limit helytelen érték!');
+
+    $configUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/info.cgi?api=SYNO.DownloadStation.Info&' .
+        'version=1&method=setserverconfig&bt_max_download=' . $_POST['bt_max_download'] . '&bt_max_upload=' . $_POST['bt_max_upload'] . '&_sid='
+        . $_SESSION['sid'];
+
+    $config = json_decode(get($configUrl), true);
+
+    if (isset($config['error'])) {
+        displayErrorAndDie($config['error']);
+    }
+
+    header('Location: ' . getBaseUrl());
+    exit();
 }
