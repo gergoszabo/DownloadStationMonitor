@@ -285,6 +285,7 @@ function getConfig($elotte)
     $configPage = str_replace('##BT_MAX_UPLOAD##', $config['data']['bt_max_upload'], $configPage);
     $configPage = str_replace('##BODY_THEME##', (DARK ? 'bg-dark text-light' : 'bg-light text-dark'), $configPage);
     $configPage = str_replace('##VERSION##', VERSION, $configPage);
+    $configPage = str_replace('##BASEURL##', getBaseUrl(), $configPage);
     $configPage = str_replace('##MS##', round(microtime(true) - $elotte, 2), $configPage);
 
     echo $configPage;
