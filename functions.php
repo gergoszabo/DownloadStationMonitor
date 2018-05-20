@@ -173,7 +173,7 @@ function getTrackerStatus($task)
     if (isset($task['additional']['tracker'])) {
         $tracker = $task['additional']['tracker'];
 
-        if (is_array($tracker)) {            // TODO: map?
+        if (is_array($tracker)) {
             foreach ($tracker as $t) {
                 if (isset($t['status']) && strlen($t['status']) > 1) {
                     $trackerStatuses[] = $t['status'];
@@ -238,7 +238,7 @@ function sortTasks($a, $b)
         $atrsp = getTrackerStatusPriority(getTrackerStatus($a));
         $btrsp = getTrackerStatusPriority(getTrackerStatus($b));
 
-        if($atrsp === $btrsp)
+        if ($atrsp === $btrsp)
             return strcmp($a['title'], $b['title']);
         else
             return $atrsp > $btrsp ? -1 : 1;
