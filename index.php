@@ -3,7 +3,7 @@ try {
     $elotte = microtime(true);
     @session_start();
 
-    define('VERSION', '0.9.5');
+    define('VERSION', '0.9.6');
 
     define('KB', 1024);
     define('MB', KB * 1024);
@@ -112,7 +112,7 @@ try {
     $page = str_replace('##TOTALDOWNSPEED##', friendlySpeed($totalDownSpeed), $page);
     $page = str_replace('##TOTALUPSPEED##', friendlySpeed($totalUpSpeed), $page);
     if (RSS)
-        $page = str_replace('##RSS##', ' <a class="btn btn-sm btn-outline-info" href="?rss">RSS</a>', $page);
+        $page = str_replace('##RSS##', ' <a class="btn btn-outline-info" href="?rss">RSS</a>', $page);
 
     $rows = implode(' ', $taskHtmls);
     $page = str_replace('##ROWS##', $rows, $page);
