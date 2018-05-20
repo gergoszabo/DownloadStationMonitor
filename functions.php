@@ -1,5 +1,9 @@
 <?php
 
+define('TRACKER_STATUS_ERROR', 10);
+define('TRACKER_STATUS_OTHER', 5);
+define('TRACKER_STATUS_OK', 1);
+
 function getBaseUrl()
 {
     // output: /myproject/index.php
@@ -147,6 +151,48 @@ function getStatusPriority($status)
     }
 }
 
+function getTrackerStatusPriority($trackerStatus)
+{
+
+    if ($trackerStatus === 'Success' || $trackerStatus === '')
+        return TRACKER_STATUS_OK;
+
+    if ($trackerStatus === 'unregistered torrent' || $trackerStatus === 'passkey not found')
+        return TRACKER_STATUS_ERROR;
+
+    return TRACKER_STATUS_OTHER;
+}
+
+function getTrackerStatus($task)
+{
+    if (isset($task['combinedTrackerStatus']))
+        return $task['combinedTrackerStatus'];
+
+    $trackerStatuses = array();
+
+    if (isset($task['additional']['tracker'])) {
+        $tracker = $task['additional']['tracker'];
+
+        if (is_array($tracker)) {            // TODO: map?
+            foreach ($tracker as $t) {
+                if (isset($t['status']) && strlen($t['status']) > 1) {
+                    $trackerStatuses[] = $t['status'];
+                }
+            }
+        } else {
+            try {
+                $trackerStatuses[] = $tracker[0]['status'];
+            } catch (Exception $ex) {
+            }
+        }
+    } else {
+        $trackerStatuses[] = 'Success';
+    }
+
+    $task['combinedTrackerStatus'] = implode(',', array_unique($trackerStatuses));
+    return $task['combinedTrackerStatus'];
+}
+
 function getStatusHtml($status)
 {
     switch (getStatusPriority($status)) {
@@ -165,16 +211,19 @@ function getStatusHtml($status)
     }
 }
 
-function toTrackerStatus($trackerStatus)
+function getTrackerStatusHtml($trackerStatus)
 {
-    if ($trackerStatus === 'Success' || $trackerStatus === '')
-        return '<span class="btn btn-sm btn-success">OK</span>';
+    switch (getTrackerStatusPriority($trackerStatus)) {
+        case TRACKER_STATUS_OK:
+            return '<span class="btn btn-sm btn-success">OK</span>';
 
+        case TRACKER_STATUS_ERROR:
+            return '<span class="btn btn-sm btn-danger">' . $trackerStatus . '</span>';
 
-    if ($trackerStatus === 'unregistered torrent' || $trackerStatus === 'passkey not found')
-        return '<span class="btn btn-sm btn-danger">' . $trackerStatus . '</span>';
-
-    return '<span class="btn btn-sm btn-warning">' . $trackerStatus . '</span>';
+        default:
+        case TRACKER_STATUS_OTHER:
+            return '<span class="btn btn-sm btn-warning">' . $trackerStatus . '</span>';
+    }
 }
 
 function sortTasks($a, $b)
@@ -185,9 +234,14 @@ function sortTasks($a, $b)
     if ($ap !== $bp)
         return $ap > $bp ? -1 : 1;
 
-
     if ($a['status'] == $b['status']) {
-        return strcmp($a['title'], $b['title']);
+        $atrsp = getTrackerStatusPriority(getTrackerStatus($a));
+        $btrsp = getTrackerStatusPriority(getTrackerStatus($b));
+
+        if($atrsp === $btrsp)
+            return strcmp($a['title'], $b['title']);
+        else
+            return $atrsp > $btrsp ? -1 : 1;
     }
 
     return strcmp($a['status'], $b['status']);

@@ -2,7 +2,7 @@
 $elotte = microtime(true);
 @session_start();
 
-define('VERSION', '0.9.3');
+define('VERSION', '0.9.4');
 
 define('KB', 1024);
 define('MB', KB * 1024);
@@ -68,6 +68,9 @@ foreach ($tasks['data']['tasks'] as $task) {
     $up = friendlySize($sizeUp);
     $html = str_replace('##UP##', $up, $html);
 
+    $progress = $task['size'] > 0 ? ($sizeDown === $task['size'] ? '100 %' : round($sizeDown / $task['size'] * 100, 2) . ' %') : '0 %';
+    $html = str_replace('##PROGRESS##', $progress, $html);
+
     $ratio = round($sizeUp / ($sizeDown > 0 ? $sizeDown : 1), 2);
     $html = str_replace('##RATIO##', $ratio, $html);
 
@@ -78,29 +81,7 @@ foreach ($tasks['data']['tasks'] as $task) {
     $totalUpSpeed += $speedUp;
     $html = str_replace('##SPEEDUP##', friendlySpeed($speedUp), $html);
 
-    $trackerStatuses = array();
-
-    if (isset($task['additional']['tracker'])) {
-        $tracker = $task['additional']['tracker'];
-
-        if (is_array($tracker)) {
-            // TODO: map?
-            foreach ($tracker as $t) {
-                if (isset($t['status']) && strlen($t['status']) > 1) {
-                    $trackerStatuses[] = $t['status'];
-                }
-            }
-        } else {
-            try {
-                $trackerStatuses[] = $tracker[0]['status'];
-            } catch (Exception $ex) {
-            }
-        }
-    } else {
-        $trackerStatuses[] = 'Success';
-    }
-
-    $html = str_replace('##TRACKER##', toTrackerStatus(implode(',', array_unique($trackerStatuses))), $html);
+    $html = str_replace('##TRACKER##', getTrackerStatusHtml(getTrackerStatus($task)), $html);
 
     $connectedSeeds = (float)$task['additional']['detail']['connected_seeders'];
     $connectedLeechers = (float)$task['additional']['detail']['connected_leechers'];
