@@ -7,6 +7,9 @@ define('PASS', 'pass');
 // sötét mód használata: igen -> true, nem -> false
 define('DARK', true);
 
+// egyszerüsített mód
+define('MOD_SIMPLE', false);
+
 // oldal újratöltésének időköze
 // 5 perc => 5 * 60
 define('UJRATOLTES', 10);

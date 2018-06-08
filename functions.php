@@ -153,7 +153,6 @@ function getStatusPriority($status)
 
 function getTrackerStatusPriority($trackerStatus)
 {
-
     if ($trackerStatus === 'Success' || $trackerStatus === '')
         return TRACKER_STATUS_OK;
 
@@ -251,7 +250,9 @@ function getTasks()
 {
     $tasksUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=' .
         'SYNO.DownloadStation.Task&version=1&method=list&_sid=' . $_SESSION['sid'] .
-        '&additional=transfer,detail,tracker';
+        '&additional=';
+
+    $tasksUrl .= MOD_SIMPLE ? 'tracker' : 'transfer,detail,tracker';
 
     $decodedRequest = json_decode(get($tasksUrl), true);
 

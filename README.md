@@ -16,6 +16,12 @@ Lehetőség van két téma között váltani, egy sötét és világos között
 // sötét mód használata: igen -> true, nem -> false
 define('DARK', true);
 ```
+Egyszerű mód: csak a tracker állapota érdekel -> true
+Minden infó: false
+```php
+// egyszerüsített mód
+define('MOD_SIMPLE', false);
+```
 Az oldal automatikusan újratöltődik bizonyos időközönként, ezt lehet megadni a következő beállítással:
 ```php
 // oldal újratöltésének időköze

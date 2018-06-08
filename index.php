@@ -3,7 +3,7 @@ try {
     $elotte = microtime(true);
     @session_start();
 
-    define('VERSION', '0.9.6');
+    define('VERSION', '0.9.7');
 
     define('KB', 1024);
     define('MB', KB * 1024);
@@ -59,13 +59,21 @@ try {
     $totalUpSpeed = 0;
     $hasIntermediateStatus = false;
 
+    $taskNumbers = 0;
+
     foreach ($tasks['data']['tasks'] as $task) {
+        if (MOD_SIMPLE && getTrackerStatusPriority(getTrackerStatus($task)) == TRACKER_STATUS_OK) {
+            continue;
+        }
+
+        $taskNumbers++;
+
         $html = str_replace('##ID##', $task['id'], $taskTemplate);
         $html = str_replace('##TITLE##', $task['title'], $html);
         $html = str_replace('##SIZE##', friendlySize((float)$task['size']), $html);
-        $sizeDown = (float)$task['additional']['transfer']['size_downloaded'];
+        $sizeDown = (float)(isset($task['additional']['transfer']) ? $task['additional']['transfer']['size_downloaded'] : 0);
         $html = str_replace('##DOWN##', friendlySize($sizeDown), $html);
-        $sizeUp = (float)$task['additional']['transfer']['size_uploaded'];
+        $sizeUp = (float)(isset($task['additional']['transfer']) ? $task['additional']['transfer']['size_uploaded'] : 0);
         $up = friendlySize($sizeUp);
         $html = str_replace('##UP##', $up, $html);
 
@@ -75,17 +83,17 @@ try {
         $ratio = round($sizeUp / ($sizeDown > 0 ? $sizeDown : 1), 2);
         $html = str_replace('##RATIO##', $ratio, $html);
 
-        $speedDown = (float)$task['additional']['transfer']['speed_download'];
+        $speedDown = (float)(isset($task['additional']['transfer']) ? $task['additional']['transfer']['speed_download'] : 0);
         $totalDownSpeed += $speedDown;
         $html = str_replace('##SPEEDDOWN##', friendlySpeed($speedDown), $html);
-        $speedUp = (float)$task['additional']['transfer']['speed_upload'];
+        $speedUp = (float)(isset($task['additional']['transfer']) ? $task['additional']['transfer']['speed_upload'] : 0);
         $totalUpSpeed += $speedUp;
         $html = str_replace('##SPEEDUP##', friendlySpeed($speedUp), $html);
 
         $html = str_replace('##TRACKER##', getTrackerStatusHtml(getTrackerStatus($task)), $html);
 
-        $connectedSeeds = (float)$task['additional']['detail']['connected_seeders'];
-        $connectedLeechers = (float)$task['additional']['detail']['connected_leechers'];
+        $connectedSeeds = (float)(isset($task['additional']['detail']) ? $task['additional']['detail']['connected_seeders'] : 0);
+        $connectedLeechers = (float)(isset($task['additional']['detail']) ? $task['additional']['detail']['connected_leechers'] : 0);
 
         $html = str_replace('##SL##', $connectedSeeds . '/' . $connectedLeechers, $html);
         $html = str_replace('##STATUS##', getStatusHtml($task['status']), $html);
@@ -104,13 +112,24 @@ try {
         unset($html);
     }
 
-    $page = str_replace('##NUMTASKS##', count($tasks['data']['tasks']), $pageTemplate);
+    $page = $pageTemplate;
+    $extraCss = '.complex { visibility: visible; display: table-cell; } .complexTr { display: table-row; }';
+
+    if (MOD_SIMPLE) {
+        $page = str_replace('##NUMTASKS##', '##NUMTASKS##<i>/' . count($tasks['data']['tasks']) . '</i>', $page);
+        $extraCss = '.complex { visibility: hidden !important; display: none !important; } .complexTr { display: none !important; }';
+    }
+
+    $page = str_replace('##EXTRACSS##', $extraCss, $page);
+
+    $page = str_replace('##NUMTASKS##', $taskNumbers, $page);
     $page = str_replace('##REFRESH##', $hasIntermediateStatus ? 2 : UJRATOLTES, $page);
     $page = str_replace('##BODY_THEME##', (DARK ? 'bg-dark text-light' : 'bg-light text-dark'), $page);
     $page = str_replace('##TABLE_THEME##', (DARK ? 'table-dark' : 'table-light'), $page);
     $page = str_replace('##VERSION##', VERSION, $page);
     $page = str_replace('##TOTALDOWNSPEED##', friendlySpeed($totalDownSpeed), $page);
     $page = str_replace('##TOTALUPSPEED##', friendlySpeed($totalUpSpeed), $page);
+    $page = str_replace("##SIMPLE##", MOD_SIMPLE ? 'Simple ' : '', $page);
     if (RSS)
         $page = str_replace('##RSS##', ' <a class="btn btn-outline-info" href="?rss">RSS</a>', $page);
 
