@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta http-equiv="content-type" content="text/html; charset=UTF-8">
     <link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
-    <meta http-equiv="refresh" content="##REFRESH##">
     <title>DownloadStationMonitor</title>
     <style type="text/css">
         html {
@@ -21,15 +20,67 @@
     <div><a href="#" class="btn btn-outline-info">v ##VERSION##</a></div>
 </div>
 <div class="container">
-    <form method="post" class="form-group">
-        <input type="hidden" value="config" name="config">
-        <label for="bt_max_download">Letöltési limit</label>
-        <input type="number" name="bt_max_download" value="##BT_MAX_DOWNLOAD##" id="bt_max_download"> <br/>
-        <label for="bt_max_upload">Feltöltési limit</label>
-        <input type="number" name="bt_max_upload" value="##BT_MAX_UPLOAD##" id="bt_max_upload"> <br/>
+    <table>
+        <tr>
+            <td class="col-4">
+                <form method="post" class="form-group">
+                    <input type="hidden" value="config" name="config">
+                    <label for="bt_max_download">Letöltési limit</label>
+                    <input type="number" name="bt_max_download" value="##BT_MAX_DOWNLOAD##" id="bt_max_download"> <br/>
+                    <label for="bt_max_upload">Feltöltési limit</label>
+                    <input type="number" name="bt_max_upload" value="##BT_MAX_UPLOAD##" id="bt_max_upload"> <br/>
 
-        <input class="btn" type="submit" value="Beállít">
-    </form>
+                    <input class="btn" type="submit" value="Beállít">
+                </form>
+            </td>
+            <td class="col-4"></td>
+            <td class="col-4">
+                <form class="form-group" method="post">
+                    <label for="wizzard_ip">IP cím</label><br>
+                    <input type="text" name="wizzard[ip]" id="wizzard_ip" value="##IP##"/><br>
+
+                    <label for="wizzard_port">PORT</label><br>
+                    <input type="number" name="wizzard[port]" id="wizzard_port" value="##PORT##"/><br>
+
+                    <label for="wizzard_user">Felhasználónév</label><br>
+                    <input type="text" name="wizzard[user]" id="wizzard_user" value="##USER##"/><br>
+
+                    <label for="wizzard_pass">Jelszó</label><br>
+                    <input type="password" name="wizzard[pass]" id="wizzard_pass"/><br>
+
+                    <label for="wizzard_dark">Sötét mód</label><br>
+                    <input type="checkbox" name="wizzard[dark]" id="wizzard_dark" ##DARK##/><br>
+
+                    <label for="wizzard_mod_simple">Egyszerüsített mód</label><br>
+                    <input type="checkbox" name="wizzard[mod_simple]" id="wizzard_mod_simple" ##MOD_SIMPLE##/><br>
+
+                    <label for="wizzard_ujratoltes">Újratöltés (másodperc)</label><br>
+                    <input type="number" name="wizzard[ujratoltes]" id="wizzard_ujratoltes" value="##UJRATOLTES##"/><br>
+
+                    <label for="wizzard_twofactor">Kétlépcsős azonosítás</label><br>
+                    <input type="checkbox" name="wizzard[twofactor]" id="wizzard_twofactor" ##TWOFACTOR##/><br>
+
+                    <label for="wizzard_protocol">Protokoll</label><br>
+                    <select name="wizzard[protocol]" id="wizzard_protocol" value="##PROTOCOL##">
+                        <option>http</option>
+                        <option>https</option>
+                    </select><br>
+
+                    <label for="wizzard_rss">RSS</label><br>
+                    <input type="checkbox" name="wizzard[rss]" id="wizzard_rss" ##RSS##/><br>
+
+                    <label for="wizzard_rss_limit">RSS Limit</label><br>
+                    <input type="number" name="wizzard[rss_limit]" id="wizzard_rss_limit" value="##RSS_LIMIT##"/><br>
+
+                    <label for="wizzard_rss_ujratoltes">RSS újratöltés (másodperc)</label><br>
+                    <input type="number" name="wizzard[rss_ujratoltes]" id="wizzard_rss_ujratoltes"
+                           value="##RSS_UJRATOLTES##"/><br>
+
+                    <input type="submit" value="Módosítás"/>
+                </form>
+            </td>
+        </tr>
+    </table>
 </div>
 </body>
 </html>

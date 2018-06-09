@@ -53,26 +53,11 @@ function get($url)
     return $result;
 }
 
-/*
-function newTaskFromUrl($url)
-{
-    $createUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=3&method=create&_sid=' . $_SESSION['sid'] . '&uri=' . urldecode($url);
-    #echo '<pre>' . $createUrl . '</pre><br/>';
-    $decodedRequest = json_decode(get($createUrl), true);
-
-    #echo '<pre>' . print_r($decodedRequest, true) . '</pre><br/>';
-
-    if (isset($decodedRequest['error'])) {
-        displayErrorAndDie(print_r(array($decodedRequest, $createUrl), true));
-    }
-
-    header('Location: ' . getBaseUrl());
-    exit();
-}
-*/
 function startTask()
 {
-    $resumeUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=resume&id=' . $_POST['start'] . '&_sid=' . $_SESSION['sid'];
+    $resumeUrl = $_SESSION['config']['protocol'] . '://' . $_SESSION['config']['ip'] . ':' .
+        $_SESSION['config']['port'] . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=resume&id=' .
+        $_POST['start'] . '&_sid=' . $_SESSION['sid'];
     $decodedRequest = json_decode(get($resumeUrl), true);
 
     if (isset($decodedRequest['error'])) {
@@ -85,7 +70,9 @@ function startTask()
 
 function pauseTask()
 {
-    $pauseUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=pause&id=' . $_POST['pause'] . '&_sid=' . $_SESSION['sid'];
+    $pauseUrl = $_SESSION['config']['protocol'] . '://' . $_SESSION['config']['ip'] . ':' .
+        $_SESSION['config']['port'] . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=pause&id=' .
+        $_POST['pause'] . '&_sid=' . $_SESSION['sid'];
     $decodedRequest = json_decode(get($pauseUrl), true);
 
     if (isset($decodedRequest['error'])) {
@@ -98,7 +85,9 @@ function pauseTask()
 
 function removeTask()
 {
-    $removeUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=delete&id=' . $_POST['remove'] . '&_sid=' . $_SESSION['sid'];
+    $removeUrl = $_SESSION['config']['protocol'] . '://' . $_SESSION['config']['ip'] . ':' . $_SESSION['config']['port'] .
+        '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=delete&id=' . $_POST['remove'] .
+        '&_sid=' . $_SESSION['sid'];
     $decodedRequest = json_decode(get($removeUrl), true);
 
     if (isset($decodedRequest['error'])) {
@@ -248,11 +237,12 @@ function sortTasks($a, $b)
 
 function getTasks()
 {
-    $tasksUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=' .
+    $tasksUrl = $_SESSION['config']['protocol'] . '://' . $_SESSION['config']['ip'] . ':' .
+        $_SESSION['config']['port'] . '/webapi/DownloadStation/task.cgi?api=' .
         'SYNO.DownloadStation.Task&version=1&method=list&_sid=' . $_SESSION['sid'] .
         '&additional=';
 
-    $tasksUrl .= MOD_SIMPLE ? 'tracker' : 'transfer,detail,tracker';
+    $tasksUrl .= $_SESSION['config']['mod_simple'] ? 'tracker' : 'transfer,detail,tracker';
 
     $decodedRequest = json_decode(get($tasksUrl), true);
 
@@ -266,27 +256,63 @@ function getTasks()
     return $decodedRequest;
 }
 
+function loadConfig()
+{
+    $_SESSION['config'] = json_decode(file_get_contents(CONFIG_JSON), true);
+}
+
+function saveConfig()
+{
+    file_put_contents(CONFIG_JSON, json_encode($_SESSION['config'], JSON_PRETTY_PRINT));
+}
+
 function getConfig($elotte)
 {
-    $configUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/info.cgi?api=SYNO.DownloadStation.Info&version=1&method=getconfig&_sid=' . $_SESSION['sid'];
+    $configPage = file_get_contents('template/config.html');
 
-    $config = json_decode(get($configUrl), true);
+    if (!isset($_SESSION['doConfig'])) {
+        $configUrl = $_SESSION['config']['protocol'] . '://' . $_SESSION['config']['ip'] . ':' .
+            $_SESSION['config']['port'] . '/webapi/DownloadStation/info.cgi?api=SYNO.DownloadStation.Info&version=1&method=getconfig&_sid=' . $_SESSION['sid'];
 
-    if (isset($config['error'])) {
-        displayErrorAndDie($config['error']);
+        $config = json_decode(get($configUrl), true);
+
+        if (isset($config['error'])) {
+            displayErrorAndDie($config['error']);
+        }
+
+        /*
+         * [bt_max_download] => 3500
+         * [bt_max_upload] => 600
+         * */
+
+        unset($_SESSION['doConfig']);
+    } else {
+        $config['data']['bt_max_download'] = 0;
+        $config['data']['bt_max_upload'] = 0;
     }
 
-    /*
-     * [bt_max_download] => 3500
-     * [bt_max_upload] => 600
-     * */
-
-    $configPage = file_get_contents('template/config.html');
     $configPage = str_replace('##BT_MAX_DOWNLOAD##', $config['data']['bt_max_download'], $configPage);
     $configPage = str_replace('##BT_MAX_UPLOAD##', $config['data']['bt_max_upload'], $configPage);
-    $configPage = str_replace('##BODY_THEME##', (DARK ? 'bg-dark text-light' : 'bg-light text-dark'), $configPage);
+    $configPage = str_replace('##BODY_THEME##', ($_SESSION['config']['dark'] ? 'bg-dark text-light' : 'bg-light text-dark'), $configPage);
     $configPage = str_replace('##VERSION##', VERSION, $configPage);
     $configPage = str_replace('##BASEURL##', getBaseUrl(), $configPage);
+
+    $configPage = str_replace('##IP##', $_SESSION['config']['ip'], $configPage);
+    $configPage = str_replace('##PORT##', $_SESSION['config']['port'], $configPage);
+    $configPage = str_replace('##USER##', $_SESSION['config']['user'], $configPage);
+    if ($_SESSION['config']['dark'])
+        $configPage = str_replace('##DARK##', 'checked', $configPage);
+    if ($_SESSION['config']['mod_simple'])
+        $configPage = str_replace('##MOD_SIMPLE##', 'checked', $configPage);
+    $configPage = str_replace('##UJRATOLTES##', $_SESSION['config']['ujratoltes'], $configPage);
+    if ($_SESSION['config']['twofactor'])
+        $configPage = str_replace('##TWOFACTOR##', 'checked', $configPage);
+    $configPage = str_replace('##PROTOCOL##', $_SESSION['config']['protocol'], $configPage);
+    if ($_SESSION['config']['rss'])
+        $configPage = str_replace('##RSS##', 'checked', $configPage);
+    $configPage = str_replace('##RSS_LIMIT##', $_SESSION['config']['rss_limit'], $configPage);
+    $configPage = str_replace('##RSS_UJRATOLTES##', $_SESSION['config']['rss_ujratoltes'], $configPage);
+
     $configPage = str_replace('##MS##', round(microtime(true) - $elotte, 2), $configPage);
 
     echo $configPage;
@@ -301,7 +327,8 @@ function setConfig()
     if (!isset($_POST['bt_max_upload']) || !is_numeric($_POST['bt_max_upload']))
         displayErrorAndDie('Feltöltési limit helytelen érték!');
 
-    $configUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/info.cgi?api=SYNO.DownloadStation.Info&' .
+    $configUrl = $_SESSION['config']['protocol'] . '://' . $_SESSION['config']['ip'] . ':' .
+        $_SESSION['config']['port'] . '/webapi/DownloadStation/info.cgi?api=SYNO.DownloadStation.Info&' .
         'version=1&method=setserverconfig&bt_max_download=' . $_POST['bt_max_download'] . '&bt_max_upload=' . $_POST['bt_max_upload'] . '&_sid='
         . $_SESSION['sid'];
 
@@ -310,6 +337,25 @@ function setConfig()
     if (isset($config['error'])) {
         displayErrorAndDie($config['error']);
     }
+
+    $_SESSION['config']['ip'] = $_POST['wizzard']['ip'];
+    $_SESSION['config']['port'] = $_POST['wizzard']['port'];
+    $_SESSION['config']['user'] = $_POST['wizzard']['user'];
+    if (isset($_POST['wizzard']['pass']) && strlen($_POST['wizzard']['pass']) > 0)
+        $_SESSION['config']['pass'] = $_POST['wizzard']['pass'];
+    $_SESSION['config']['dark'] = isset($_POST['wizzard']['dark']);
+    $_SESSION['config']['mod_simple'] = isset($_POST['wizzard']['mod_simple']);
+    $_SESSION['config']['ujratoltes'] = $_POST['wizzard']['ujratoltes'];
+    $_SESSION['config']['twofactor'] = isset($_POST['wizzard']['twofactor']);
+    $_SESSION['config']['protocol'] = $_POST['wizzard']['protocol'];
+    $_SESSION['config']['rss'] = isset($_POST['wizzard']['rss']);
+    $_SESSION['config']['rss_limit'] = $_POST['wizzard']['rss_limit'];
+    $_SESSION['config']['rss_ujratoltes'] = $_POST['wizzard']['rss_ujratoltes'];
+
+    saveConfig();
+
+    unset($_SESSION['sid']);
+    loadConfig();
 
     header('Location: ' . getBaseUrl());
     exit();
