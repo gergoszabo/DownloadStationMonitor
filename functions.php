@@ -307,7 +307,16 @@ function getConfig($elotte)
     $configPage = str_replace('##UJRATOLTES##', $_SESSION['config']['ujratoltes'], $configPage);
     if ($_SESSION['config']['twofactor'])
         $configPage = str_replace('##TWOFACTOR##', 'checked', $configPage);
-    $configPage = str_replace('##PROTOCOL##', $_SESSION['config']['protocol'], $configPage);
+
+    if($_SESSION['config']['protocol'] === 'https') {
+        $configPage = str_replace('##PROTOCOL_HTTP##', '', $configPage);
+        $configPage = str_replace('##PROTOCOL_HTTPS##', 'selected', $configPage);
+    }
+    else {
+        $configPage = str_replace('##PROTOCOL_HTTP##', 'selected', $configPage);
+        $configPage = str_replace('##PROTOCOL_HTTPS##', '', $configPage);
+    }
+
     if ($_SESSION['config']['rss'])
         $configPage = str_replace('##RSS##', 'checked', $configPage);
     $configPage = str_replace('##RSS_LIMIT##', $_SESSION['config']['rss_limit'], $configPage);
