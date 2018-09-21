@@ -1,0 +1,30 @@
+<form method="post" action="/">
+    <div>
+        <label for="username">Felhasználói név</label>
+        <input type="text" name="username">
+    </div>
+    <div>
+        <label for="password">Jelszó</label>
+        <input type="text" name="password">
+    </div>
+    <div>
+        <label for="protocol">Protokoll</label>
+        <div>
+            <label for="http">http</label>
+            <input type="radio" name="protocol" id="http" value="http">
+            <label for="https">https</label>
+            <input type="radio" name="protocol" id="https" value="https">
+        </div>
+    </div>
+    <div>
+        <label for="host">Hosztnév</label>
+        <input type="text" name="host">
+    </div>
+    <div>
+        <label for="port">Port</label>
+        <input type="text" name="port">
+    </div>
+    <div>
+        <input type="submit" value="Ment">
+    </div>
+</form>

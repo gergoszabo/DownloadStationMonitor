@@ -1,0 +1,42 @@
+* {
+    padding: 0px;
+    margin: 0px;
+}
+
+ul {
+    padding: 10px;
+    width: 100%;
+}
+li {
+    list-style-type: none;
+    padding: 5px 0px;
+}
+span {
+    display: inline-block;
+}
+span::after {
+    clear: both;
+}
+[title] {
+    width: 90%;
+}
+[ratio],[status],[tracker] {
+    padding: 0px 5px;
+    width: 4%;
+}
+.tracker-error {
+    color: red;
+}
+form {
+    text-align: center;
+}
+form > div > label {
+    display: block;
+    padding-top: 10px;
+}
+input, label {
+    font-size: larger;
+}
+input[type=text] {
+    border-radius: 10px;
+}

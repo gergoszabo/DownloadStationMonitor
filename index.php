@@ -1,144 +1,66 @@
 <?php
-try {
-    $elotte = microtime(true);
-    @session_start();
+@session_start();
+/*$_SESSION['protocol'] = 'https';
+$_SESSION['host'] = 'gary89.synology.me';
+$_SESSION['port'] = '5001';*/
 
-    define('VERSION', '0.9.7');
+if(isset($_POST['username'])) $_SESSION['username'] = $_POST['username'];
+if(isset($_POST['password'])) $_SESSION['password'] = $_POST['password'];
+if(isset($_POST['protocol'])) $_SESSION['protocol'] = $_POST['protocol'];
+if(isset($_POST['host'])) $_SESSION['host'] = $_POST['host'];
+if(isset($_POST['port'])) $_SESSION['port'] = $_POST['port'];
 
-    define('KB', 1024);
-    define('MB', KB * 1024);
-    define('GB', MB * 1024);
-    define('STATUS_PRIOR_ERROR', 10);
-    define('STATUS_PRIOR_ACTIONABLE', 8);
-    define('STATUS_PRIOR_OTHER', 6);
-    define('STATUS_PRIOR_INTERMEDIATE', 4);
-    define('STATUS_PRIOR_OK', 1);
-
-    include 'config.php';
-    include 'functions.php';
-
-    if (isset($_GET['fresh']))
-        session_unset();
-
-    if (TWOFACTOR)
-        include 'twofactorauth.php';
-
-    include 'session.php';
-
-
-    if (isset($_POST['config']))
-        setConfig();
-
-    if (isset($_GET['config']))
-        getConfig($elotte);
-
-    // itt már be vagyunk jelentkezve
-    /*
-    if (isset($_GET['create']))
-        newTaskFromUrl($_GET['create']);
-    */
-    if (isset($_GET['rss']))
-        include 'rss.php';
-
-    if (isset($_POST['start']))
-        startTask();
-
-    if (isset($_POST['pause']))
-        pauseTask();
-
-    if (isset($_POST['remove']))
-        removeTask();
-
-    $tasks = getTasks();
-
-    $pageTemplate = file_get_contents('template/tasks.html');
-    $taskTemplate = file_get_contents('template/task.html');
-
-    $taskHtmls = array();
-    $totalDownSpeed = 0;
-    $totalUpSpeed = 0;
-    $hasIntermediateStatus = false;
-
-    $taskNumbers = 0;
-
-    foreach ($tasks['data']['tasks'] as $task) {
-        if (MOD_SIMPLE && getTrackerStatusPriority(getTrackerStatus($task)) == TRACKER_STATUS_OK) {
-            continue;
-        }
-
-        $taskNumbers++;
-
-        $html = str_replace('##ID##', $task['id'], $taskTemplate);
-        $html = str_replace('##TITLE##', $task['title'], $html);
-        $html = str_replace('##SIZE##', friendlySize((float)$task['size']), $html);
-        $sizeDown = (float)(isset($task['additional']['transfer']) ? $task['additional']['transfer']['size_downloaded'] : 0);
-        $html = str_replace('##DOWN##', friendlySize($sizeDown), $html);
-        $sizeUp = (float)(isset($task['additional']['transfer']) ? $task['additional']['transfer']['size_uploaded'] : 0);
-        $up = friendlySize($sizeUp);
-        $html = str_replace('##UP##', $up, $html);
-
-        $progress = $task['size'] > 0 ? ($sizeDown === $task['size'] ? '100 %' : round($sizeDown / $task['size'] * 100, 2) . ' %') : '0 %';
-        $html = str_replace('##PROGRESS##', $progress, $html);
-
-        $ratio = round($sizeUp / ($sizeDown > 0 ? $sizeDown : 1), 2);
-        $html = str_replace('##RATIO##', $ratio, $html);
-
-        $speedDown = (float)(isset($task['additional']['transfer']) ? $task['additional']['transfer']['speed_download'] : 0);
-        $totalDownSpeed += $speedDown;
-        $html = str_replace('##SPEEDDOWN##', friendlySpeed($speedDown), $html);
-        $speedUp = (float)(isset($task['additional']['transfer']) ? $task['additional']['transfer']['speed_upload'] : 0);
-        $totalUpSpeed += $speedUp;
-        $html = str_replace('##SPEEDUP##', friendlySpeed($speedUp), $html);
-
-        $html = str_replace('##TRACKER##', getTrackerStatusHtml(getTrackerStatus($task)), $html);
-
-        $connectedSeeds = (float)(isset($task['additional']['detail']) ? $task['additional']['detail']['connected_seeders'] : 0);
-        $connectedLeechers = (float)(isset($task['additional']['detail']) ? $task['additional']['detail']['connected_leechers'] : 0);
-
-        $html = str_replace('##SL##', $connectedSeeds . '/' . $connectedLeechers, $html);
-        $html = str_replace('##STATUS##', getStatusHtml($task['status']), $html);
-
-        $pausable = $task['status'] !== 'paused';
-        $startable = $task['status'] === 'paused' || $task['status'] === 'finished';
-        $removable = $startable || $task['status'] === 'seeding' || $task['status'] === 'downloading';
-
-        $hasIntermediateStatus |= getStatusPriority($task['status']) === STATUS_PRIOR_INTERMEDIATE;
-
-        $html = str_replace('##START_VISIBLE_CLASS##', ($startable ? 'visible' : 'invisible'), $html);
-        $html = str_replace('##PAUSE_VISIBLE_CLASS##', ($pausable ? 'visible' : 'invisible'), $html);
-        $html = str_replace('##REMOVE_VISIBLE_CLASS##', ($removable ? 'visible' : 'invisible'), $html);
-
-        $taskHtmls[] = $html;
-        unset($html);
-    }
-
-    $page = $pageTemplate;
-    $extraCss = '.complex { visibility: visible; display: table-cell; } .complexTr { display: table-row; }';
-
-    if (MOD_SIMPLE) {
-        $page = str_replace('##NUMTASKS##', '##NUMTASKS##<i>/' . count($tasks['data']['tasks']) . '</i>', $page);
-        $extraCss = '.complex { visibility: hidden !important; display: none !important; } .complexTr { display: none !important; }';
-    }
-
-    $page = str_replace('##EXTRACSS##', $extraCss, $page);
-
-    $page = str_replace('##NUMTASKS##', $taskNumbers, $page);
-    $page = str_replace('##REFRESH##', $hasIntermediateStatus ? 2 : UJRATOLTES, $page);
-    $page = str_replace('##BODY_THEME##', (DARK ? 'bg-dark text-light' : 'bg-light text-dark'), $page);
-    $page = str_replace('##TABLE_THEME##', (DARK ? 'table-dark' : 'table-light'), $page);
-    $page = str_replace('##VERSION##', VERSION, $page);
-    $page = str_replace('##TOTALDOWNSPEED##', friendlySpeed($totalDownSpeed), $page);
-    $page = str_replace('##TOTALUPSPEED##', friendlySpeed($totalUpSpeed), $page);
-    $page = str_replace("##SIMPLE##", MOD_SIMPLE ? 'Simple ' : '', $page);
-    if (RSS)
-        $page = str_replace('##RSS##', ' <a class="btn btn-outline-info" href="?rss">RSS</a>', $page);
-
-    $rows = implode(' ', $taskHtmls);
-    $page = str_replace('##ROWS##', $rows, $page);
-    $page = str_replace('##MS##', round(microtime(true) - $elotte, 2), $page);
-
-    echo $page;
-
-} catch (Exception $ex) {
-    echo 'Kivétel: ' . $ex->getMessage() . '<br/>' . $ex->getFile() . ' - ' . $ex->getLine();
+if(count($_POST) > 0) {
+    header('Location: /');
+    die('');
 }
+
+if(isset($_GET['reset'])) {
+    unset($_SESSION['sid']);
+    unset($_SESSION['protocol']);
+    unset($_SESSION['host']);
+    unset($_SESSION['port']);
+    unset($_SESSION['username']);
+    unset($_SESSION['password']);
+}
+
+if (!isset($_SESSION['sid']) && !isset($_GET['reset'])) {
+    $loginUrl = $_SESSION['protocol'].'://'.$_SESSION['host'].':'.$_SESSION['port'].'/webapi/auth.cgi?api=SYNO.API.Auth&version=2&method=login' .
+        '&account='.$_SESSION['username'].'&passwd='.$_SESSION['password'].'&session=DownloadStation&format=sid';
+
+    $decodedLogin = json_decode(get($loginUrl), true);
+
+    if (isset($decodedLogin['data']['sid']))
+        $_SESSION['sid'] = $decodedLogin['data']['sid'];
+}
+
+function get($url) {
+    $ch = curl_init();
+    $defaults = array(
+        CURLOPT_URL => $url,
+        CURLOPT_HEADER => 0,
+        CURLOPT_RETURNTRANSFER => TRUE,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_SSL_VERIFYPEER => 0,
+    );
+    curl_setopt_array($ch, $defaults);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
+}
+
+if (isset($_GET['tasks'])) {
+    $url = $_SESSION['protocol'].'://'.$_SESSION['host'].':'.$_SESSION['port'].'/webapi/DownloadStation/task.cgi?api='.
+        'SYNO.DownloadStation.Task&version=1&method=list&_sid='.$_SESSION['sid'].'&additional=transfer,detail,tracker';
+    die(get($url));
+}
+
+?>
+
+<link href="style.css" rel="stylesheet">
+<script src="angular.js"></script>
+<script src="app.js"></script>
+<body ng-app="app">
+    <?=isset($_SESSION['username'])?'<tasks></tasks>':'<config></config>'?>
+</body>

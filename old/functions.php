@@ -151,6 +151,12 @@ function getStatusPriority($status)
     }
 }
 
+define('STATUS_PRIOR_ERROR', 10);
+define('STATUS_PRIOR_ACTIONABLE', 8);
+define('STATUS_PRIOR_OTHER', 6);
+define('STATUS_PRIOR_INTERMEDIATE', 4);
+define('STATUS_PRIOR_OK', 1);
+
 function getTrackerStatusPriority($trackerStatus)
 {
     if ($trackerStatus === 'Success' || $trackerStatus === '')
