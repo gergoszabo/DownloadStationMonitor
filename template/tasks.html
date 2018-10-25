@@ -10,15 +10,27 @@
         html {
             font-size: 0.9rem;
         }
+        #createForm {
+            display: none;
+        }
         ##EXTRACSS##
     </style>
+    <script type="text/javascript">
+        function addUrl() {
+            var url = prompt("Please enter your name", "");
+            if(!url || !url.length) return;
+            document.getElementById('createUrl').value = url;
+            document.forms['createForm'].submit();
+        }
+    </script>
 </head>
 <body class="##BODY_THEME## container-fluid d-table m-1 p-0">
 <div class="container-fluid d-flex">
     <div class="h3 font-italic d-flex flex-grow-1 justify-content-center align-items-center">##SIMPLE##Download Station Monitor
     </div>
-    <div><a href="#" class="btn btn-outline-info">##MS## s</a></div>
-    <div><a href="#" class="btn btn-outline-info">v ##VERSION##</a></div>
+    <div><a href="javascript:void();" class="btn btn-outline-info" onclick="addUrl(); return false;">Hozzáad</a></div>
+    <div><a href="javascript:void();" class="btn btn-outline-info">##MS## s</a></div>
+    <div><a href="javascript:void();" class="btn btn-outline-info">v ##VERSION##</a></div>
     <div>##RSS##</div>
     <div><a class="btn btn-outline-info" href="?config">Beállítások</a></div>
 </div>
@@ -45,5 +57,8 @@
         <td colspan="4"></td>
     </tr>
 </table>
+<form id="createForm" method="POST">
+    <input type="hidden" id="createUrl" name="create">
+</form>
 </body>
 </html>

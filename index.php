@@ -25,7 +25,6 @@ try {
 
     include 'session.php';
 
-
     if (isset($_POST['config']))
         setConfig();
 
@@ -33,10 +32,9 @@ try {
         getConfig($elotte);
 
     // itt már be vagyunk jelentkezve
-    /*
-    if (isset($_GET['create']))
-        newTaskFromUrl($_GET['create']);
-    */
+    if (isset($_POST['create']))
+        newTaskFromUrl($_POST['create']);
+
     if (isset($_GET['rss']))
         include 'rss.php';
 
