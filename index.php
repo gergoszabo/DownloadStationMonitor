@@ -3,7 +3,7 @@ try {
     $elotte = microtime(true);
     @session_start();
 
-    define('VERSION', '0.9.7');
+    define('VERSION', '0.9.8');
 
     define('KB', 1024);
     define('MB', KB * 1024);
