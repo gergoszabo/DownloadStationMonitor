@@ -32,6 +32,27 @@ function displayErrorAndDie($error)
     die($template);
 }
 
+function post($url, $data) {
+    $ch = curl_init();
+
+    $defaults = array(
+        CURLOPT_URL => $url,
+        CURLOPT_HEADER => 0,
+        CURLOPT_POST => TRUE,
+        CURLOPT_RETURNTRANSFER => TRUE,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_SSL_VERIFYPEER => 0,
+        CURLOPT_POSTFIELDS => $data
+    );
+    curl_setopt_array($ch, $defaults);
+
+    $result = curl_exec($ch);
+
+    curl_close($ch);
+
+    return $result;
+}
+
 function get($url)
 {
     $ch = curl_init();
@@ -40,7 +61,6 @@ function get($url)
         CURLOPT_URL => $url,
         CURLOPT_HEADER => 0,
         CURLOPT_RETURNTRANSFER => TRUE,
-        CURLOPT_TIMEOUT => 4,
         CURLOPT_SSL_VERIFYHOST => 0,
         CURLOPT_SSL_VERIFYPEER => 0,
     );
@@ -53,14 +73,11 @@ function get($url)
     return $result;
 }
 
-/*
 function newTaskFromUrl($url)
 {
-    $createUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=3&method=create&_sid=' . $_SESSION['sid'] . '&uri=' . urldecode($url);
-    #echo '<pre>' . $createUrl . '</pre><br/>';
-    $decodedRequest = json_decode(get($createUrl), true);
-
-    #echo '<pre>' . print_r($decodedRequest, true) . '</pre><br/>';
+    $createUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi';
+    $data = 'api=SYNO.DownloadStation.Task&version=3&method=create&_sid='.$_SESSION['sid'].'&uri=' . urlencode($url);
+    $decodedRequest = json_decode(post($createUrl, $data), true);
 
     if (isset($decodedRequest['error'])) {
         displayErrorAndDie(print_r(array($decodedRequest, $createUrl), true));
@@ -69,7 +86,7 @@ function newTaskFromUrl($url)
     header('Location: ' . getBaseUrl());
     exit();
 }
-*/
+
 function startTask()
 {
     $resumeUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=resume&id=' . $_POST['start'] . '&_sid=' . $_SESSION['sid'];
