@@ -3,6 +3,8 @@
 define('TRACKER_STATUS_ERROR', 10);
 define('TRACKER_STATUS_OTHER', 5);
 define('TRACKER_STATUS_OK', 1);
+define('UNREG_TORRENT', 'unregistered torrent');
+define('UNREG_TORRENT_SHORT', 'unreg.torr.');
 
 function getBaseUrl()
 {
@@ -173,7 +175,7 @@ function getTrackerStatusPriority($trackerStatus)
     if ($trackerStatus === 'Success' || $trackerStatus === '')
         return TRACKER_STATUS_OK;
 
-    if ($trackerStatus === 'unregistered torrent' || $trackerStatus === 'passkey not found')
+    if ($trackerStatus === UNREG_TORRENT || $trackerStatus === 'passkey not found')
         return TRACKER_STATUS_ERROR;
 
     return TRACKER_STATUS_OTHER;
@@ -192,12 +194,12 @@ function getTrackerStatus($task)
         if (is_array($tracker)) {
             foreach ($tracker as $t) {
                 if (isset($t['status']) && strlen($t['status']) > 1) {
-                    $trackerStatuses[] = $t['status'];
+                    $trackerStatuses[] = $t['status'] === UNREG_TORRENT ? UNREG_TORRENT_SHORT : $t['status'];
                 }
             }
         } else {
             try {
-                $trackerStatuses[] = $tracker[0]['status'];
+                $trackerStatuses[] = $tracker[0]['status'] === UNREG_TORRENT ? UNREG_TORRENT_SHORT : $tracker[0]['status'];
             } catch (Exception $ex) {
             }
         }
