@@ -1,3 +1,4 @@
-config.debug.php
+config.local.php
+index.html
 sync.bat
 .idea/

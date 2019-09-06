@@ -28,13 +28,14 @@ function displayErrorAndDie($error)
 {
     $template = file_get_contents('template/error.html');
 
-    $template = str_replace('##ERROR##', $error, $template);
+    $template = str_replace('##ERROR##', print_r($error, true), $template);
     $template = str_replace('##BASEURL##', getBaseUrl(), $template);
 
     die($template);
 }
 
-function post($url, $data) {
+function post($url, $data)
+{
     $ch = curl_init();
 
     $defaults = array(
@@ -78,7 +79,7 @@ function get($url)
 function newTaskFromUrl($url)
 {
     $createUrl = PROTOCOL . '://' . IP . ':' . PORT . '/webapi/DownloadStation/task.cgi';
-    $data = 'api=SYNO.DownloadStation.Task&version=3&method=create&_sid='.$_SESSION['sid'].'&uri=' . urlencode($url);
+    $data = 'api=SYNO.DownloadStation.Task&version=3&method=create&_sid=' . $_SESSION['sid'] . '&uri=' . urlencode($url);
     $decodedRequest = json_decode(post($createUrl, $data), true);
 
     if (isset($decodedRequest['error'])) {
@@ -200,8 +201,7 @@ function getTrackerStatus($task)
         } else {
             try {
                 $trackerStatuses[] = $tracker[0]['status'] === UNREG_TORRENT ? UNREG_TORRENT_SHORT : $tracker[0]['status'];
-            } catch (Exception $ex) {
-            }
+            } catch (Exception $ex) { }
         }
     } else {
         $trackerStatuses[] = 'Success';
