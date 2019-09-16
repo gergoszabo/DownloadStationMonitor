@@ -1,0 +1,148 @@
+html {
+    font-size: 1rem;
+}
+
+body {
+    background-color: #343a40;
+    margin: 8px 8px 0 8px;
+}
+
+body,
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+body,
+body a {
+    color: #f8f9fa;
+}
+
+header {
+    display: flex;
+    flex-direction: row;
+    font-size: 1.1rem;
+}
+
+header div {
+    flex-grow: 1;
+    flex-shrink: 1;
+    text-align: center;
+}
+
+header div.title {
+    flex-grow: 60;
+    flex-shrink: 0;
+    font-size: 1.3rem;
+    padding: .375rem .75rem;
+}
+
+header div.settings a {
+    border: 1px solid #f8f9fa;
+    border-radius: .25rem;
+    display: inline-block;
+    font-size: 1.1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    padding: .375rem .75rem;
+    text-align: center;
+    text-decoration: none;
+}
+
+main {
+    height: calc(100vh - 5.5rem);
+    margin-top: 0.5rem;
+}
+
+main article {
+    display: flex;
+    flex-direction: row;
+    padding: 0.1rem 0;
+}
+
+main article:first-child span {
+    font-weight: 700;
+}
+
+main article:nth-child(odd) {
+    background-color: #475a6d;
+}
+
+main article span:first-child,
+main article span:last-child {
+    padding-left: 0.2rem;
+}
+
+main article span.title {
+    flex: 6 1;
+    flex-wrap: nowrap;
+    word-break: break-all;
+}
+
+main article span.size,
+main article span.transfer,
+main article span.ratio,
+main article span.speed,
+main article span.tracker,
+main article span.connected,
+main article span.status {
+    flex: 1;
+    text-align: center;
+}
+
+.small,
+.medium {
+    display: none;
+}
+
+.large {
+    display: block;
+}
+
+footer {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+footer span {
+    display: inline-block;
+    padding: .375rem;
+}
+
+@media (max-width: 1024px) {
+    main article span.title {
+        flex: 3 1;
+    }
+
+    main article span.ratio,
+    main article span.tracker,
+    main article span.status,
+    main article span.connected {
+        flex: 0.5;
+    }
+
+    .large,
+    .small {
+        display: none;
+    }
+
+    .medium {
+        display: block;
+    }
+}
+
+@media (max-width: 600px) {
+    main article span.title {
+        flex: 4 1;
+    }
+
+    .large,
+    .medium {
+        display: none;
+    }
+
+    .small {
+        display: block;
+    }
+}
