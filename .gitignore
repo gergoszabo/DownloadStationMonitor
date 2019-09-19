@@ -2,3 +2,4 @@ config.local.php
 index.html
 sync.bat
 .idea/
+docker/run.bat

@@ -3,11 +3,15 @@ try {
     $elotte = microtime(true);
     @session_start();
 
-    if (@(include 'config.local.php') === false) {
-        include 'config.php';
-    }
+    $IP = getenv('IP');
+    $PORT = getenv('PORT');
+    $USER = getenv('USER');
+    $PASS = getenv('PASS');
+    $RELOAD = getenv('RELOAD');
+    $TWOFACTOR = getenv('TWOFACTOR') === 'true';
+    $PROTOCOL = getenv('PROTOCOL');
 
-    $version = '0.11.0';
+    $version = '0.12.1';
 
     $kb = 1024;
     $mb = $kb * 1024;
@@ -69,13 +73,13 @@ try {
         <head>
             <meta charset='UTF-8'>
             <meta http-equiv='content-type' content='text/html; charset=UTF-8'>
-            <link type='text/css' rel='stylesheet' href='bootstrap.min.css'/>
-            <title>Hiba - DownloadStationMonitor</title>
+            <link type='text/css' rel='stylesheet' href='main.css'/>
+            <title>Error - DownloadStationMonitor</title>
         </head>
         <body class='container'>
-        <div class='alert-heading'>Hiba történt!</div>
+        <div class='alert-heading'>Error happened!</div>
         <div class='alert-danger'>$error</div>
-        <a class='btn btn-primary' href='$baseUrl'>Vissza</a>
+        <a class='btn btn-primary' href='$baseUrl'>Back</a>
         </body>
         </html>");
     }
@@ -172,26 +176,27 @@ try {
         exit();
     }
 
-    function toFriendly($num, $limit, $aboveSuffix, $bellow, $bellowSuffix)
+    function toFriendly($num, $gbsuffix, $mbsuffix, $kbsuffix)
     {
-        if ($num > $limit) {
-            return sprintf("%.1f $aboveSuffix", round($num / $limit, 2));
+        global $gb, $mb, $kb;
+
+        if ($num > $gb) {
+            return sprintf("%.1f $gbsuffix", round($num / $gb, 2));
         }
-        return sprintf("%.1f $bellowSuffix", round($num / $bellow, 2));
+        if ($num > $mb) {
+            return sprintf("%.1f $mbsuffix", round($num / $mb, 2));
+        }
+        return sprintf("%.1f $kbsuffix", round($num / $kb, 2));
     }
 
     function friendlySize($size)
     {
-        global $gb, $mb;
-
-        return toFriendly($size, $gb, 'GB', $mb, 'MB');
+        return toFriendly($size, 'GB', 'MB', 'KB');
     }
 
     function friendlySpeed($speed)
     {
-        global $mb, $kb;
-
-        return toFriendly($speed, $mb, 'MB/s', $kb, 'KB/s');
+        return toFriendly($speed, 'GB/s', 'MB/s', 'KB/s');
     }
 
     function getStatusPriority($status)
@@ -244,7 +249,7 @@ try {
             $trackerStatuses[] = 'Success';
         }
 
-        $task['combinedTrackerStatus'] = implode(',', array_unique($trackerStatuses));
+        $task['combinedTrackerStatus'] = implode('<br>', array_unique($trackerStatuses));
         return $task['combinedTrackerStatus'];
     }
 
@@ -344,9 +349,8 @@ try {
         <head>
             <meta charset='UTF-8'>
             <meta http-equiv='content-type' content='text/html; charset=UTF-8'>
-            <link type='text/css' rel='stylesheet' href='bootstrap.min.css'/>
-            <meta http-equiv='refresh' content='##REFRESH##'>
-            <title>DownloadStationMonitor</title>
+            <link type='text/css' rel='stylesheet' href='main.css'/>
+            <title>Config - DownloadStationMonitor</title>
             <style type='text/css'>
                 html {
                     font-size: 0.9rem;
@@ -364,12 +368,12 @@ try {
         <div class='container'>
             <form method='post' class='form-group'>
                 <input type='hidden' value='config' name='config'>
-                <label for='bt_max_download'>Letöltési limit</label>
+                <label for='bt_max_download'>Download limit</label>
                 <input type='number' name='bt_max_download' value='$btMaxDownloaded' id='bt_max_download'> <br/>
-                <label for='bt_max_upload'>Feltöltési limit</label>
+                <label for='bt_max_upload'>Upload limit</label>
                 <input type='number' name='bt_max_upload' value='$btMaxUpload' id='bt_max_upload'> <br/>
         
-                <input class='btn' type='submit' value='Beállít'>
+                <input class='btn' type='submit' value='Save'>
             </form>
         </div>
         </body>
@@ -380,10 +384,10 @@ try {
     {
         global $synoUrlDs;
         if (!isset($_POST['bt_max_download']) || !is_numeric($_POST['bt_max_download']))
-            displayErrorAndDie('Letöltési limit helytelen érték!');
+            displayErrorAndDie('Download limit wrong value!');
 
         if (!isset($_POST['bt_max_upload']) || !is_numeric($_POST['bt_max_upload']))
-            displayErrorAndDie('Feltöltési limit helytelen érték!');
+            displayErrorAndDie('Upload limit wrong value!');
 
         $btMaxDownloaded = $_POST['bt_max_download'];
         $btMaxUpload = $_POST['bt_max_upload'];
@@ -437,11 +441,11 @@ try {
             <h2 class="center"><i>Download Station Monitor</i></h2>
             <form method="POST">
                 <div class="form-group">
-                    <label for="otp">Kétlépcsős azonosítás</label>
+                    <label for="otp">Two factor authentication</label>
                     <input type="text" class="form-control" id="otp">
                 </div>
 
-                <button type="submit" class="btn btn-primary">Belépés</button>
+                <button type="submit" class="btn btn-primary">Send</button>
             </form>
             </body>
             </html>');
@@ -457,7 +461,7 @@ try {
             if (isset($decodedLogin['data']['sid']))
                 $_SESSION['sid'] = $decodedLogin['data']['sid'];
             else
-                displayErrorAndDie('Sikertelen kétlépcsős bejelentkezés!');
+                displayErrorAndDie('Unsuccessfuly two factor login!');
         }
     }
 
@@ -469,14 +473,13 @@ try {
     }
 
     handleSession();
+    // from now on, we are logged in
 
     if (isset($_POST['config']))
         setConfig();
 
     if (isset($_GET['config']))
         getConfig($elotte);
-
-    // itt már be vagyunk jelentkezve
 
     if (isset($_POST['start']))
         startTask();
@@ -506,6 +509,9 @@ try {
         $sizeDown = (float) (isset($task['additional']['transfer']) ? $task['additional']['transfer']['size_downloaded'] : 0);
         $sizeUp = (float) (isset($task['additional']['transfer']) ? $task['additional']['transfer']['size_uploaded'] : 0);
         $progress = $task['size'] > 0 ? ($sizeDown === $task['size'] ? '100 %' : round($sizeDown / $task['size'] * 100, 2) . ' %') : '0 %';
+        if ($progress === '100 %') {
+            $progress = '';
+        }
         $ratio = round($sizeUp / ($sizeDown > 0 ? $sizeDown : 1), 2);
         $sizeDown = friendlySize($sizeDown);
         $sizeUp = friendlySize($sizeUp);
@@ -524,15 +530,13 @@ try {
         $connectedSeeds = (float) (isset($task['additional']['detail']) ? $task['additional']['detail']['connected_seeders'] : 0);
         $connectedLeechers = (float) (isset($task['additional']['detail']) ? $task['additional']['detail']['connected_leechers'] : 0);
 
-        echo '<!--' . $task['status'] . '-->';
-        echo '<!--' . print_r($statusToPriority, true) . '-->';
-        echo '<!--' . print_r($statusCssClass, true) . '-->';
         $statusCssClass_ = $statusCssClass[$statusToPriority[$task['status']]];
 
         /*
          * TODO:
          * + uploaded
          * + seeder/leecher
+         * + display current progress if its not 100%
          * - ETA calculation for downloading task
          * - start-stop-pause actions
          * - unregistered torrent displayment improvement
@@ -542,7 +546,7 @@ try {
         <article id='task$id'>
             <span class='title large medium small'>$title</span>
             <span class='size large medium'>$friendlySize</span>
-            <span class='transfer large medium'>$sizeDown / $sizeUp</span>
+            <span class='transfer large medium'>$sizeDown / $sizeUp<br>$progress</span>
             <span class='ratio large medium small'>$ratio</span>
             <span class='speed large medium'>$speedDown / $speedUp</span>
             <span class='tracker large medium small'>$trackerStatus</span>
@@ -577,7 +581,7 @@ try {
     <meta charset='UTF-8'>
     <meta http-equiv='content-type' content='text/html; charset=UTF-8'>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <meta http-equiv='refresh' content='$UJRATOLTES'>
+    <meta http-equiv='refresh' content='$RELOAD'>
     <link type='text/css' rel='stylesheet' href='main.css' />
     <title>DSM</title>
 </head>
