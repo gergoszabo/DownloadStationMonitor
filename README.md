@@ -1,3 +1,3 @@
 # DownloadStationMonitor
 
-[README.MD](https://github.com/gary89/DownloadStationMonitor/blob/master/php/README.MD)
+[README.MD](https://github.com/gary89/DownloadStationMonitor/tree/master/php/README.MD)
