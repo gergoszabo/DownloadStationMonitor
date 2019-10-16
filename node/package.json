@@ -1,0 +1,13 @@
+{
+  "name": "download-station-monitor",
+  "version": "1.0.2",
+  "description": "",
+  "main": "server.js",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fastify": "^2.8.0",
+    "fastify-static": "^2.5.0",
+    "lit-html": "^1.1.2"
+  }
+}
