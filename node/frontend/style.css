@@ -92,6 +92,10 @@ main article span.connected {
     flex: 1;
 }
 
+main article span.tracker img {
+    cursor: help;
+}
+
 .small,
 .medium {
     display: none;

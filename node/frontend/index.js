@@ -108,6 +108,7 @@ const transformTask = task => {
         speedDown: getTaskSpeedDown(task),
         speedUp: getTaskSpeedUp(task),
         trackerStatus: getTrackerStatus(task),
+        trackerStatuses: getTrackerStatuses(task),
         taskStatus: task.status,
         connected: isTaskConnected(task),
         statusCssClass_: ''
@@ -130,15 +131,20 @@ const calcTotalSpeed = () => {
 
 const getTaskStatusExtra = task => task.status_extra ? (task.status_extra.error_detail === 'torrent_duplicate' ? 'Duplicate' : task.status_extra.error_detail) : '';
 
-const getTrackerStatus = (task) => {
+const getTrackerStatuses = (task) => {
     if (!task.additional || !task.additional.tracker) {
-        return getTaskStatusExtra(task) || 'Success';
+        return [getTaskStatusExtra(task) || 'Success'];
     }
     if (!Array.isArray(task.additional.tracker)) {
         task.additional.tracker = [task.additional.tracker];
     }
 
     const statuses = task.additional.tracker.map(t => t.status);
+    return [...new Set(statuses)];
+}
+
+const getTrackerStatus = (task) => {
+    const statuses = getTrackerStatuses(task);
     const unreg = statuses.find(s => s === UNREGISTERED_TORRENT_TRACKER_STATUS);
     if (unreg) return unreg;
     const success = statuses.find(s => s === 'Success');
@@ -309,7 +315,7 @@ const rowTemplate = (task) => html`
     <span class='transfer large medium'><span>${task.sizeDown}</span>/<br><span>${task.sizeUp}</span><br><span>${task.progress}</span></span>
     <span class='ratio large medium small'>${task.ratio}</span>
     <span class='speed large medium'>${task.speed}</span>
-    <span class='tracker large medium small'><img src="${trackerStatusIconMap[task.trackerStatus] || 'wait.png'}" alt="${task.trackerStatus}" /></span>
+    <span class='tracker large medium small'><img src="${trackerStatusIconMap[task.trackerStatus] || 'wait.png'}" alt="${task.trackerStatus}" title="${task.trackerStatuses.join(', ')}" /></span>
     <span class='connected large medium'>${task.connected}</span>
     <span class='status large medium small'><img src="${statusIconMap[task.taskStatus]}" alt="${task.taskStatus}" /></span>
 </article>`;
