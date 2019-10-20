@@ -11,6 +11,7 @@ var data = {
 };
 
 const KB = 1024, MB = KB * 1024, GB = MB * 1024;
+const UNREGISTERED_TORRENT_TRACKER_STATUS = 'err: unregistered torrent';
 
 const statusIconMap = {
     'error': 'error.png',
@@ -49,9 +50,9 @@ const trackerStatusPriorityMap = {
 
 const trackerStatusIconMap = {
     'Success': 'finished.png',
-    'unregistered torrent': 'error.png',
     '': 'error.png'
 };
+trackerStatusIconMap[UNREGISTERED_TORRENT_TRACKER_STATUS] = 'error.png';
 
 const friendlySize = (size) => {
     if (size > GB) return `${(size / GB).toFixed(1)} GB`;
@@ -138,7 +139,7 @@ const getTrackerStatus = (task) => {
     }
 
     const statuses = task.additional.tracker.map(t => t.status);
-    const unreg = statuses.find(s => s === 'Unregistered torrent');
+    const unreg = statuses.find(s => s === UNREGISTERED_TORRENT_TRACKER_STATUS);
     if (unreg) return unreg;
     const success = statuses.find(s => s === 'Success');
     if (success) return success;
