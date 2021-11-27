@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        (function () {
+            var cookies;
+
+            function readCookie(name, c, C, i) {
+                if (cookies) { return cookies[name]; }
+
+                c = document.cookie.split('; ');
+                cookies = {};
+
+                for (i = c.length - 1; i >= 0; i--) {
+                    C = c[i].split('=');
+                    cookies[C[0]] = C[1];
+                }
+
+                return cookies[name];
+            }
+
+            window.readCookie = readCookie;
+        })();
+    </script>
+</head>
+
+<body>
+    <script>
+        document.body.classList.add(window.readCookie('theme'));
+    </script>
+    <progress id="progress"></progress>
+    <table>
+        <thead>
+        <tr>
+            <th>Név</th>
+            <th>Állapot</th>
+            <th>Méret</th>
+            <th>Sebesség (le/fel)</th>
+            <th>Tracker</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+    <script>
+        const KB = 1024,
+            MB = KB * 1024,
+            GB = MB * 1024;
+
+        function toFriendlySize(size) {
+            if (size >= GB) {
+                return (size / GB).toFixed(2) + ' GB';
+            }
+            if (size >= MB) {
+                return (size / MB).toFixed(2) + ' MB';
+            }
+            if (size >= KB) {
+                return (size / KB).toFixed(1) + ' KB';
+            }
+            return size + ' B';
+        }
+
+        function toFriendlySpeed(speed) {
+            if (speed >= MB) {
+                return (speed / MB).toFixed(1) + ' MB/s';
+            }
+            if (speed >= KB) {
+                return (speed / KB).toFixed(1) + ' KB/s';
+            }
+            return speed + ' B/s';
+        }
+
+        let lastGetTasksTime = 0;
+        const getTasks = async () => {
+            const tbody = document.getElementsByTagName('tbody')[0];
+            const progress = document.getElementById('progress');
+            progress.style.display = 'block';
+            !tbody.childElementCount && (tbody.innerHTML = '<tr><td colspan="5"><center>Betöltés...</center></td></tr>');
+            const before = Date();
+            const response = await fetch('tasks.php').then(response => response.json());
+            progress.style.display = 'none';
+            lastGetTasksTime = Date() - before;
+
+            const trackerErrors = ['error', 'unregistered'];
+            const trackerWarnings = ['could not connect to tracker', 'tracker gave http response code 0 (no response)', 'tracker did not respond'];
+
+            const tasks = response.data.tasks
+                .map(task => {
+                    const downloaded = task.additional?.transfer?.size_downloaded;
+                    const size = downloaded !== undefined && task.size !== downloaded
+                        ? `${toFriendlySize(downloaded)} / ${toFriendlySize(task.size)}`
+                        : toFriendlySize(task.size);
+                    const speed = task.additional?.transfer ? `${toFriendlySpeed(task.additional.transfer.speed_download)} / ${toFriendlySpeed(task.additional.transfer.speed_upload)}` : '';
+                    const tracker = task.additional?.tracker ? 
+                        Array.isArray(task.additional.tracker) ?
+                            Array.from(new Set(task.additional.tracker.map(t => t.status).filter(Boolean))).join(', ') :
+                            task.additional.tracker :
+                            '';
+
+                    return {
+                        title: task.title,
+                        status: task.status,
+                        size,
+                        speed,
+                        tracker,
+                    };
+                })
+                .map(task => ({
+                    ...task,
+                    inError: trackerErrors.some(e => task.tracker.toLowerCase().includes(e)) || task.status === 'error',
+                    inWarning: trackerWarnings.some(e => task.tracker.toLowerCase().includes(e)),
+                }))
+                .sort((a, b) => {
+                    if (a.inError && b.inError) return a.title.localeCompare(b.title);
+                    if (a.inError) return -1;
+                    if (b.inError) return 1;
+                    if (a.inWarning && b.inWarning) return a.title.localeCompare(b.title);
+                    if (a.inWarning) return -1;
+                    if (b.inWarning) return 1;
+
+                    return a.title.localeCompare(b.title);
+                });
+
+            const rows = tasks.map(task => {
+                const tr = document.createElement('tr');
+                task.inError && tr.classList.add('in-error');
+                task.inWarning && tr.classList.add('in-warning');
+                Object.keys(task)
+                    .filter(p => !['inError', 'inWarning'].includes(p))
+                    .forEach(key => {
+                        tr.appendChild(document.createElement('td')).innerText = task[key];
+                    });
+                return tr;
+            });
+
+            tbody.innerHTML = '';
+            rows.forEach(row => tbody.appendChild(row));
+        };
+
+        const reload = window.readCookie('reload');
+
+        if (reload > 0) {
+            const reloadInMs = reload * 1000;
+            setInterval(() => {
+                if (reloadInMs > lastGetTasksTime) {
+                    getTasks();
+                } else {
+                    // skip one round
+                    lastGetTasksTime = 0;
+                }
+            }, reloadInMs);
+        }
+
+        getTasks();
+    </script>
+    <div class="app-version"></div>
+    <script>
+        document.getElementsByClassName('app-version')[0].innerHTML = 'v' + window.readCookie('version');
+    </script>
+</body>
+
+</html>

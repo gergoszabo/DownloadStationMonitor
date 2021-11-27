@@ -1,0 +1,40 @@
+body.dark {
+    color: white;
+    background-color: black;
+    margin: 0;
+}
+
+table {
+    padding: 0.5rem;
+    width: calc(100% - 1rem);
+}
+
+tr.in-error {
+    color: red;
+}
+tr.in-warning {
+    color: orange;
+}
+
+tr > :not(:first-child) {
+    text-align: center;
+}
+
+.app-version {
+    position: relative;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    color: black;
+    width: 100%;
+    text-align: right;
+    margin-top: 0.5rem;
+}
+
+body.dark .app-version {
+    color: white;
+}
+
+progress {
+    position: absolute;
+    width: 100%;
+}
