@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Download Station Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        (function () {
+            var cookies;
+
+            function readCookie(name, c, C, i) {
+                if (cookies) { return cookies[name]; }
+
+                c = document.cookie.split('; ');
+                cookies = {};
+
+                for (i = c.length - 1; i >= 0; i--) {
+                    C = c[i].split('=');
+                    cookies[C[0]] = C[1];
+                }
+
+                return cookies[name];
+            }
+
+            window.readCookie = readCookie;
+        })();
+    </script>
+</head>
+
+<body>
+    <script>
+        document.body.classList.add(window.readCookie('theme'));
+    </script>
+    <h2 class="center"><i>Download Station Monitor</i></h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="otp">Kétlépcsős azonosítás</label>
+            <input type="text" class="form-control" id="otp" name="otp">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Belépés</button>
+    </form>
+    <div class="app-version"></div>
+    <script>
+        document.getElementsByClassName('app-version')[0].innerHTML = 'v' + window.readCookie('version');
+    </script>
+    <script>
+        document.getElementById('otp').focus();
+    </script>
+</body>
+
+</html>
